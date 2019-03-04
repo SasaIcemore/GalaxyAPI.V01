@@ -1,0 +1,54 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>添加模块</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+</head>
+<body>
+    <div class="container">
+        模块名称：
+        <input class="form-control" type="text" id="module_name" value="" />
+        <hr />
+        描述：
+        <br />
+        <textarea class="form-control" rows="4" cols="20" style="border:thin solid #cccccc" id="descr"></textarea>
+        <hr />
+        <div class="btn btn-info" id="add_module">添加</div>
+    </div>
+</body>
+</html>
+<script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="~/layer/layer.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $("#add_module").click(function () {
+            var module_name = $("#module_name").val();
+            if (module_name =="") { 
+                layer.msg("请填写模块名称");
+                return false;
+            }
+            var descr = $("#descr").val();
+            $.ajax({
+                url: "/manage/AddModuleAct",
+                type: "post",
+                cache: false,
+                async: false,
+                data: {
+                    "module_name": module_name,
+                    "descr": descr
+                },
+                success: function (data) { 
+                    layer.msg(data);
+                }
+            });
+        });
+    });
+</script>

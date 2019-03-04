@@ -1,0 +1,96 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>APIConfig</title>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="http://passport.cnblogs.com/scripts/jsencrypt.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                @Html.AntiForgeryToken()
+                <table>
+                    <tr>
+                        <td>数据库类型:</td>
+                        <td>
+                            &nbsp;
+                            <select name="database_type">
+                                @{
+                                if ((string)ViewData["databaseType"] == "sqlServer")
+                                {
+                                    <option value="sqlServer" selected>sqlServer</option>
+                                    <option value="postgresql">postgresql</option>
+                                }
+                                else
+                                {
+                                    <option value="sqlServer">sqlServer</option>
+                                    <option value="postgresql" selected>postgresql</option>
+                                }
+                                }
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>IP:</td>
+                        <td>&nbsp;&nbsp;<input name="ip" type="text" value="@ViewData["ip"]" /></td>
+                    </tr>
+                    <tr>
+                        <td>数据库:</td>
+                        <td>&nbsp;&nbsp;<input name="database" type="text" value="@ViewData["database"]" /></td>
+                    </tr>
+                    <tr>
+                        <td>用户名:</td>
+                        <td>&nbsp;&nbsp;<input name="user" type="text" value="@ViewData["user"]" /></td>
+                    </tr>
+                    <tr>
+                        <td>密码:</td>
+                        <td>&nbsp;&nbsp;<input name="pwd" type="password" value="" /></td>
+                    </tr>
+                    <tr>
+                        <td style="text-align:center" colspan="2"><input type="button" id="setconn" value="确定" /></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <input id="public_key" type="hidden" value="@ViewData["PublicKey"]" />
+    
+    <script type="text/javascript">
+    $(function () {
+        $("#setconn").click(function () {
+            var encrypt = new JSEncrypt();
+            encrypt.setPublicKey($("#public_key").val());
+            var ip_data = encrypt.encrypt($("input[name='ip']").val());
+            var database_data = encrypt.encrypt($("input[name='database']").val());
+            var user_data = encrypt.encrypt($("input[name='user']").val());
+            var pwd_data = encrypt.encrypt($("input[name='pwd']").val());
+            $.ajax({
+                url: "/index/SelAPIModule",
+                type: "post",
+                cache: false,
+                data: {
+                    "__RequestVerificationToken": $("[name='__RequestVerificationToken']").val(),
+                    "database_type": $("[name='database_type']").val(),
+                    "ip": ip_data,
+                    "database": database_data,
+                    "user": user_data,
+                    "pwd": pwd_data,
+                },
+                success: function (data) {
+                    $("[name='pwd']").val("");
+                    $("#content_body").html(data);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

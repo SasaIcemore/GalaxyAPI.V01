@@ -1,0 +1,124 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ModuleManage</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-1">
+                <div class="btn btn-info" id="add_module">添加模块</div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table">
+                    <tr>
+                        <th>ID</th>
+                        <th>模块</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>详情</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+    $(function () {
+        $("#add_module").click(add_module);
+        get_module();
+
+    });
+    function get_module() {
+        $.ajax({
+            url: "/manage/GetModule",
+            type: "post",
+            cache: false,
+            data: {
+                "all":true
+            },
+            success: function (data) {
+                var jsonObj = eval("(" + data + ")");
+                var table = $("table");
+                for (var i = 0; i < jsonObj.length;i++) {
+                    var tr = $("<tr></tr>");
+                    table.append(tr);
+
+                    var td1 = $("<td></td>");
+                    td1.text(jsonObj[i]["id"]);
+                    tr.append(td1);
+
+                    var td2 = $("<td></td>");
+                    td2.text(jsonObj[i]["module_name"]);
+                    tr.append(td2);
+
+                    var td3 = $("<td></td>");
+                    td3.text(jsonObj[i]["descr"]);
+                    tr.append(td3);
+
+                    var td4 = $("<td></td>");
+                    if (jsonObj[i]["is_del"] == false) {
+                        td4.html("<font color='blue'>启用</font>");
+                    } else {
+                        td4.html("<font color='red'>已删除</font>");
+                    }
+                    tr.append(td4);
+
+                    var td_btn = $("<td></td>");
+                    td_btn.appendTo(tr);
+                    td_btn.html("<div class='btn btn-info' id='module_" + jsonObj[i]["id"] + "' is_del='" + jsonObj[i]["is_del"] + "' module_index='" + jsonObj[i]["module_index"] + "'>详情</div>");
+                }
+                var module_menu = $("div[id^='module_']");
+                module_menu.click(function () {
+                    var module_id = $(this).attr("id").split("_")[1];
+                    var is_del = $(this).attr("is_del");
+                    var module_index = $(this).attr("module_index");
+                    set_module_menu(module_id, is_del, module_index);
+                });
+            }
+        });
+    }
+    function add_module() {
+        layer.open({
+            type: 2,
+            title: '添加模块',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['400px', '350px'],
+            content: '/manage/AddModule'
+        });
+    }
+    function set_module_menu(module_id, is_del,module_index) {
+        $.ajax({
+            url: "/manage/SetModuleMenu",
+            type: "post",
+            cache: false,
+            data: {
+                "module_id": module_id,
+                "is_del": is_del,
+                "module_index": module_index
+            },
+            success: function (data) {
+                $("#content_body").html(data);
+             }
+        });
+
+    }
+    </script>
+</body>
+</html>

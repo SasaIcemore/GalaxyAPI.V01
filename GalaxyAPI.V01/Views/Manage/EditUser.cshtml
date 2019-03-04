@@ -1,0 +1,147 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>EditUser</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/switch_btn.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript" src="~/js/switch_btn.js"></script>
+    <script type="text/javascript" src="~/js/sha1.js"></script>
+</head>
+<body>
+    <style type="text/css">
+        li {
+            margin: 0;
+            padding: 0;
+            list-style: none
+        }
+    </style>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <h3>@ViewData["UserId"]:@ViewData["UserName"]</h3>
+                <hr />
+                <h4>修改密码</h4>
+                新密码：
+                <input class="form-control" name="pwd" style="width:300px" type="password" value="" />
+                <br />
+                确认密码：
+                <input class="form-control" name="confirm_pwd" style="width:300px" type="password" value="" />
+                <hr />
+                <h4>所属组织/部门</h4>
+                <input class="form-control" name="dept_name" style="width:300px" type="text" value="" />
+                <hr />
+                <h4>角色</h4>
+                <div style="width:300px">
+                    <ul class="role_ul"></ul>
+                </div>
+                <hr />
+                <h4>是否启用</h4>
+                @{ if ((bool)ViewData["IsDel"])
+                    {
+                        <div class="slide-btn">
+                            <div class="inner-off" id="inner" style="left:-51px;">
+                                <input style="display:none;" type="checkbox">
+                                <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="slide-btn">
+                            <div class="inner-on" id="inner">
+                                <input style="display:none;" type="checkbox" checked>
+                                <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                            </div>
+                        </div>
+                    }
+                }
+                <hr />
+                <div class="btn btn-info" id="set_user">确定</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+    $(function () {
+        get_roles();
+
+        $("#set_user").click(function () {
+            var pwd = $("input[name='pwd']").val();
+            var confirm_pwd = $("input[name='confirm_pwd']").val();
+            if (pwd != confirm_pwd) {
+                layer.msg('密码与确认密码不一致');
+                return false;
+            }
+            pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+            var dept_name = $("input[name='dept_name']").val();
+            var role = $("input[name='role_radio']:checked").attr("id");
+            var user_id = '@ViewData["UserId"]'.split("_")[1];
+
+            var is_del = false;
+            var chk_val = $(".slide-btn div").attr("class");
+            if (chk_val == "inner-off") {
+                is_del = true;
+            }
+            set_user(user_id, dept_name, is_del, role, pwd);
+        });
+
+        switch_btn_click();
+    });
+    function get_roles() {
+        $.ajax({
+            url: "/manage/GetRoles",
+            type: "post",
+            cache: false,
+            data: {
+                "all_role": false
+            },
+            success: function (data) {
+                var jsonObj = eval("(" + data + ")");
+                for (var i = 0; i < jsonObj.length;i++) {
+                    var li = $("<li></li>");
+                    var ul = $(".role_ul");
+                    ul.append(li);
+                    var radio = $("<input/>");
+                    radio.attr({ "type": "radio", "class": "role_radio", "id": jsonObj[i]["id"], "name": "role_radio" });
+                    if (jsonObj[i]["id"] == parseInt('@ViewData["RoleId"]', 10)){
+                        radio.attr("checked", 'true');;
+                    }
+                    radio.val(jsonObj[i]["id"]);
+                    radio.appendTo(li);
+                    li.html(li.html() + jsonObj[i]["role_name"]);
+                }
+             }
+        });
+    }
+    function set_user(user_id, dept_name, is_del, role, pwd) {
+        $.ajax({
+            url: "/manage/EditUser1",
+            type: "post",
+            cache: false,
+            async: false,
+            data: {
+                "user_id":user_id,
+                "dept_name": dept_name,
+                "role": role,
+                "pwd": pwd,
+                "is_del": is_del
+            },
+            success: function (data) {
+                layer.msg(data);
+            }
+        });
+    }
+    </script>
+</body>
+</html>

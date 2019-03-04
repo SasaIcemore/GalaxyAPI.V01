@@ -1,0 +1,59 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>SelAPIModule</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <style type="text/css">
+        .api_model:hover {
+            cursor: pointer;
+            border: 1px solid #0094ff;
+        }
+    </style>
+    @Html.AntiForgeryToken()
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="row">
+                    <div class="col-md-3 api_model" id="GuideModel">
+                        <span class="glyphicon glyphicon-search"></span>
+                        <div href="#">向导模式</div>
+                    </div>
+                    <div class="col-md-3 api_model" id="ScriptModel">
+                        <span class="glyphicon glyphicon-file"></span>
+                        <div href="#">脚本模式</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    $(function () {
+        $(".api_model").click(function () {
+            var id = $(this).attr("id");
+            $.ajax({
+                url: "/Index/" + id,
+                type: "post",
+                cache: false,
+                data: {
+                    "__RequestVerificationToken": $("[name='__RequestVerificationToken']").val(),
+                },
+                success: function (data) {
+                    $("#content_body").html(data);
+                }
+            });
+        });
+    });
+    </script>
+</body>
+</html>

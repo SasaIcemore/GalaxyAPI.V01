@@ -1,0 +1,125 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>UserManage</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-1">
+                <div class="btn btn-info" id="add_user">添加用户</div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table table-striped">
+                    <tr>
+                        <th>用户名</th>
+                        <th>组织</th>
+                        <th>状态</th>
+                        <th>详情</th>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+    $(function () {
+        //动态生成用户列表
+        $.ajax({
+            url: "/Manage/GetUser",
+            type: "post",
+            cache: false,
+            async: false,
+            success: function (data) {
+                //console.log(data);
+                var table = $("table");
+                var json = eval("(" + data + ")");
+                if (json != null || json != "null") {
+                    for (var i = 0; i < json.length; i++) {
+                        var tr = $("<tr></tr>");
+                        tr.attr({ "class": "userId_" + json[i]["id"]}).appendTo(table);
+
+                        var td1 = $("<td></td>");
+                        td1.attr({"class":"user_name"});
+                        td1.text(json[i]["name"]);
+                        td1.appendTo(tr);
+
+                        var td2 = $("<td></td>");
+                        td2.attr({"class":"dept_name"}).text(json[i]["dept_name"]);
+                        td2.appendTo(tr);
+
+                        var td3 = $("<td></td>");
+                        td3.attr({"class":"is_del"});
+                        if (json[i]["is_del"] == false) {
+                            td3.html("<font color='blue'>启用</font>");
+                        } else {
+                            td3.html("<font color='red'>已删除</font>");
+                        }
+                        td3.appendTo(tr);
+
+                        var td4 = $("<td></td>");
+                        td4.html("<div class='btn btn-info' id='userId_"+json[i]["id"]+"' role_id='"+json[i]["role_id"]+"' is_del='"+json[i]["is_del"]+"'>详情</div>");
+                        td4.appendTo(tr);
+                    }
+                }
+            }
+        });
+
+        $("#add_user").click(add_user);
+
+        $("div[id^='userId_']").click(function () {
+            var this1 = $(this);
+            edit_user(this1, this1.attr("is_del"));
+        });
+    });
+    function add_user() {
+        layer.open({
+            type: 2,
+            title: '添加用户',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['400px', '550px'],
+            content: '/manage/adduser' //iframe的url
+        });
+    }
+    function edit_user(this1, is_del) {
+        var userId = this1.attr("id");
+        var tr = $("." + userId);
+        var userName = tr.children(".user_name").text();
+        var dept_name = tr.children(".dept_name").text();
+        var role_id = this1.attr("role_id");
+        $.ajax({
+            url: "/manage/EditUser",
+            type: "post",
+            cache: false,
+            data: {
+                "user_id": userId,
+                "user_name": userName,
+                "is_del": is_del,
+                "role_id": role_id
+            },
+            success: function (data) {
+                $("#content_body").html(data);
+            }
+        });
+
+    }
+    </script>
+
+</body>
+</html>

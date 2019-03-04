@@ -1,0 +1,21 @@
+﻿
+@{
+    ViewData["Title"] = "API";
+}
+
+<h2>API</h2>
+选择数据源
+<a href="/galaxyApi/Galaxy/api/getsql/token='123'&id=a" class="sqlServer">sqlServer</a>
+<br />
+<a href="/galaxyApi/Galaxy/api/getsql/token='456'&id=b" class="postgresql">postgresql</a>
+api==========@ViewData["api"]
+@{
+    if ((string[])ViewData["params"] != null)
+    {
+        foreach (var i in (string[])ViewData["params"])
+        {
+            @i<br />
+            <div>=====================</div>
+        }
+    }
+}

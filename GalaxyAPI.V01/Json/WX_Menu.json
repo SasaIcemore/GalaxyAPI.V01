@@ -1,0 +1,24 @@
+﻿{
+     "button":[
+     {    
+          "type":"click",
+          "name":"精彩推荐",
+          "key":"V1001_TODAY_MUSIC"
+      },
+      {
+           "name":"菜单",
+           "sub_button":[
+            {
+              "type": "view",
+              "name": "搜索",
+              "url": "http://www.soso.com/"
+            },
+            {
+              "type": "miniprogram",
+              "name": "wxa",
+              "url": "http://mp.weixin.qq.com",
+              "appid": "wx0170ac4607e785d8",
+              "pagepath": "pages/lunar/index"
+            }]
+       }]
+ }
