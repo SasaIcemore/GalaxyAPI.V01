@@ -5,35 +5,51 @@
 
 <h2>Login</h2>
 <div>
-    <form asp-action="../Login/ChkLogin" method="post" enctype="application/x-www-form-urlencoded" onsubmit="return chkVal()">
-        <div class="form-group">
-            <div class="input-group">
-                <span class="input-group-addon">用户名：</span>
-                <input type="text" class="form-control" name="userName" id="userName" placeholder="用户名" />
-            </div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">用户名：</span>
+            <input type="text" class="form-control" name="userName" id="userName" placeholder="用户名" />
         </div>
-        <div class="form-group">
-            <div class="input-group">
-                <span class="input-group-addon">&nbsp;&nbsp;&nbsp;密码：</span>
-                <input type="password" class="form-control" name="password" id="password" placeholder="密码" />
-            </div>
+    </div>
+    <div class="form-group">
+        <div class="input-group">
+            <span class="input-group-addon">&nbsp;&nbsp;&nbsp;密码：</span>
+            <input type="password" class="form-control" name="password" id="password" placeholder="密码" />
         </div>
-        <input type="submit" id="login" class="btn btn-default text-center" value="登录" />
-    </form>
+    </div>
+    <div class="btn btn-info text-center" id="login_btn">登录</div>
 </div>
 <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="~/js/Global.js"></script>
 <script type="text/javascript" src="~/js/sha1.js"></script>
 <script type="text/javascript">
-    function chkVal() {
-        var name = $("#userName").val();
-        var pwd = $("#password").val();
-        if (name == "" || pwd == "") {
-            alert("用户名或密码不能为空");
-            return false;
-        } else { 
-            pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
-            $("#password").val(pwd)
-            return true;
-        }
-    }
+    $(function () {
+        $("#login_btn").click(function () {
+            var name = $("#userName").val();
+            var pwd = $("#password").val();
+            if (name == "" || pwd == "") {
+                alert("用户名或密码不能为空");
+                return false;
+            } else {
+                pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+                $("#password").val(pwd)
+                $.ajax({
+                    url: "/login/ChkLogin",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "userName": name,
+                        "password":pwd
+                    },
+                    success: function (data) { 
+                        if (data) {
+                            window.location = "/Manage/Index";
+                        } else {
+                            window.location = "/Login/Login";
+                        }
+                    }
+                });
+            }
+        });
+    });
 </script>

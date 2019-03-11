@@ -24,7 +24,7 @@
                             &nbsp;
                             <select name="database_type">
                                 @{
-                                if ((string)ViewData["databaseType"] == "sqlServer")
+                                if ((string)ViewData["databaseType"] == MyConfig.ConfigManager.DB_TYPE_SQL)
                                 {
                                     <option value="sqlServer" selected>sqlServer</option>
                                     <option value="postgresql">postgresql</option>

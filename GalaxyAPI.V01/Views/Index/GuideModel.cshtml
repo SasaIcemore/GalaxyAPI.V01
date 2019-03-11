@@ -28,28 +28,15 @@
                             <div class="col-md-2"><div class="btn btn-info" id="reload_page">刷新</div></div>
                         </div>
                         <br />
-                        <label>数据表：</label>@Html.DropDownList("tblNameList")
+                        <h4>数据表：</h4>@Html.DropDownList("tblNameList")
                         <br />
                         <br />
-                        <label>字段：</label>
+                        <h4>字段：</h4>
                         <div class="fieldDiv"></div>
                         <br />
-                        <br />
-                        <label>条件：</label>
                         <div>
-                            <lable>查询记录数：</lable>
-                            <select id="pageCount">
-                                <option value="50">50</option>
-                                <option value="100">100</option>
-                                <option value="500">500</option>
-                                <option value="1000">1000</option>
-                            </select>
-                            <br />
-                            <label>查询页面：</label>
-                            <input type="text" id="pageNum" value="" />
-                            <br />
-                            <label>筛选字段：</label>
-                            <div class="row query">
+                            <h4>筛选条件：</h4>
+                            <div class="row">
                                 <div class="col-md-2">
                                     <select id="sel_query_field"></select>
                                 </div>
@@ -60,27 +47,70 @@
                                         <option value="=">=</option>
                                         <option value="!=">!=</option>
                                         <option value="like">like</option>
+                                        <option value="in">in</option>
                                     </select>
                                 </div>
                                 <div class="col-md-2">
-                                    <input type="text" id="query_val" value="" size="6"/>
+                                    <input type="text" id="query_val" value="" size="6" />
+                                </div>
+                                <div class="col-md-5">
+                                    描述：<input type="text" id="params_descr" value="" size="16" />
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-md-2">
+                                    设置为参数<input type="checkbox" id="chk_param" />
                                 </div>
                                 <div class="col-md-1">
                                     <div class="btn btn-info btn-sm" id="add_query">=></div>
                                 </div>
-                                <div class="col-md-5" style="border:thin solid #cccccc" id="query_content"></div>
+                                <div class="col-md-3" style="border:thin solid #cccccc" id="query_content"></div>
                                 <div class="col-md-1">
-                                    <div class="btn btn-warning btn-sm" id="clear_query_content">
-                                        <span class="glyphicon glyphicon-trash"></span>清除
-                                    </div>
+                                    <div class="btn btn-warning btn-sm" id="clear_query_content">清除</div>
                                 </div>
                             </div>
                         </div>
+                        <br />
+                        <h4>参数配置：</h4>
+                        <div id="set_params">
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2"><b>参数名</b></div>
+                                <div class="col-md-2"><b>描述</b></div>
+                                <div class="col-md-2"><b>运算符</b></div>
+                                <div class="col-md-2"><b>值</b></div>
+                                <div class="col-md-1"><b>删除</b></div>
+                            </div>
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2">pageCount</div>
+                                <div class="col-md-2">查询的记录数</div>
+                                <div class="col-md-2">=</div>
+                                <div class="col-md-2">
+                                    <select id="pageCount">
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="500">500</option>
+                                        <option value="1000">1000</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">&nbsp;</div>
+                            </div>
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2">pageNum</div>
+                                <div class="col-md-2">查询第几页</div>
+                                <div class="col-md-2">=</div>
+                                <div class="col-md-2"><input type="text" size="4" id="pageNum" value="" /></div>
+                                <div class="col-md-1">&nbsp;</div>
+                            </div>
+                        </div>
+                        <br />
+                        <br />
+
                         <div class="btn btn-info" id="setParams">查询</div>
                         <br />
                         <textarea rows="10" cols="110" name="query_sql" id="query_sql"></textarea>
                         <br />
-                       
+
                         <br />
                         <div class="btn btn-info" id="save_api">保存为API</div>
                     </form>
@@ -146,9 +176,13 @@
                     $("#query_val").focus();
                     return;
                 }
+
                 var content_part = "";
                 if (operation == "like") {
                     content_part = field + " like \'%" + field_val +"%\'";
+                }
+                else if (operation == "in") { 
+                    content_part = field + " "+ operation + "("+ field_val + ")";
                 }
                 else { 
                     content_part = field + operation + field_val;
@@ -157,6 +191,25 @@
                 var query = $("#query_content").text();
                 query = query +" and " + content_part;
                 $("#query_content").text(query);
+
+                var div_row = $("<div></div>");
+                div_row.attr({ "class": "row" }).css({ "border-bottom":"thin solid #cccccc"}).appendTo($("#set_params"));
+
+                var params_name_div = $("<div></div>");
+                params_name_div.attr({ "class": "col-md-2" }).text(field).appendTo(div_row);
+
+                var params_descr_div = $("<div><div>");
+                params_descr_div.attr({ "class": "col-md-2" }).text($("#params_descr").val()).appendTo(div_row);
+
+                var params_operation_div = $("<div><div>");
+                params_operation_div.attr({ "class": "col-md-2" }).text(operation).appendTo(div_row);
+
+                var params_val_div = $("<div><div>");
+                params_val_div.attr({ "class": "col-md-2" }).text(field_val).appendTo(div_row);
+
+                var params_val_div = $("<div><div>");
+                params_val_div.attr({ "class": "col-md-2" }).html('<div class="btn btn-warning btn-sm" row_clear="1">清除</div >').appendTo(div_row);
+
             });
 
             //清除字段的查询条件

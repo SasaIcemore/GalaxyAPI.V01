@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <config>
-  <galaxy_token val="http://192.168.0.207:8083/connect/token" descr="galaxyapi 的 identityServer 验证"></galaxy_token>
+  <galaxy_token val="http://192.168.0.207:8084/connect/token" descr="服务端token"></galaxy_token>
+  <userinfo val="http://192.168.0.207:8084/connect/userinfo" descr="idserver 身份信息"></userinfo>
+  <authority val="http://192.168.0.207:8084" descr="客户端身份验证"></authority>
   <source DbType="postgresql" Host="192.168.0.207" UserName="postgres" Password="console.write" Database="glxyapi" descr="配置权限的数据库"></source>
   
   <wx_mp is_use="off" descr="是否启用微信公众号接口 on--启用 off--关闭">

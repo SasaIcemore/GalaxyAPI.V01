@@ -24,14 +24,8 @@ namespace GalaxyAPI.V01.Controllers
             return View();
         }
         
-        public IActionResult ChkLogin(string userName, string password)
+        public bool ChkLogin(string userName, string password)
         {
-            string cookieToken = HttpContext.Request.Cookies["token"];
-            if (!string.IsNullOrEmpty(cookieToken))
-            {
-                //已登录,跳转到后台管理
-                return View("Views/Manage/Index.cshtml");
-            }
             string token = string.Empty;
             try
             {
@@ -60,12 +54,12 @@ namespace GalaxyAPI.V01.Controllers
             if (string.IsNullOrEmpty(token))
             {
                 //登录失败
-                return View("Login");
+                return false;
             }
             //登录成功
             HttpContext.Session.SetString("userName", userName);
             HttpContext.Session.SetString("password", password);
-            return View("Views/Manage/Index.cshtml");
+            return true;
         }
         
         public IActionResult Logout()

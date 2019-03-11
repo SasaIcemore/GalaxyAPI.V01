@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using WeiXin;
 using WeiXinAccessToken;
 
 namespace GalaxyAPI.V01
@@ -44,18 +39,11 @@ namespace GalaxyAPI.V01
                 });
             });
             services.AddSession();
-            //添加依赖注入配置
-            services.AddIdentityServer()
-                .AddDeveloperSigningCredential()
-                .AddInMemoryIdentityResources(Config.GetIdentityResourceResources())
-                .AddInMemoryApiResources(Config.GetResources())
-                .AddInMemoryClients(Config.GetClients())
-                .AddTestUsers(Config.GetTsetUsers());
 
             services.AddAuthentication("Bearer")
                 .AddIdentityServerAuthentication(c =>
                 {
-                    c.Authority = MyConfig.ConfigManager.TOKEN_URL;
+                    c.Authority = MyConfig.ConfigManager.AUTHORITY;
                     c.RequireHttpsMetadata = false;
                     c.ApiName = "api";
                 });
@@ -79,7 +67,6 @@ namespace GalaxyAPI.V01
             app.UseCookiePolicy();
             app.UseCors("any");
             app.UseSession();
-            app.UseIdentityServer();
             app.UseAuthentication();
             
             app.UseMvc(routes =>
@@ -87,11 +74,6 @@ namespace GalaxyAPI.V01
                 routes.MapRoute(
                     name: "default",
                     template: "{controller=Login}/{action=Login}/{id?}");
-
-                routes.MapRoute(
-                    name: "GalaxyAPI",
-                    
-                    template: "{area:exists}/{controller=Galaxy}/{action=API}/{apiName?}/{param?}");
             });
         }
     }

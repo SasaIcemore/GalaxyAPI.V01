@@ -1,5 +1,5 @@
-﻿using API.Tools.DeliveryRecords;
-using GalaxyApi;
+﻿using GalaxyApi;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -12,10 +12,10 @@ using Tools;
 using Tools.pgsql;
 using Tools.RSA;
 using Tools.sql;
-using WarehouseAPI.Models;
 
 namespace GalaxyAPI.V01.Models
 {
+    [EnableCors("any")]
     public class IndexController : Controller
     {
         private APIDataHelper apiDataHelper = new APIDataHelper();
@@ -100,6 +100,33 @@ namespace GalaxyAPI.V01.Models
             return View();
         }
 
+        ///// <summary>
+        ///// api参数配置视图
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult ApiParams()
+        //{
+        //    return View();
+        //}
+
+        ///// <summary>
+        ///// 参数类型视图
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult ApiParamsType()
+        //{
+        //    return View();
+        //}
+
+        ///// <summary>
+        ///// 运算符视图
+        ///// </summary>
+        ///// <returns></returns>
+        //public IActionResult ApiOperation()
+        //{
+        //    return View();
+        //}
+
         /// <summary>
         /// 生成数据库连接串，记录数据库信息
         /// </summary>
@@ -172,7 +199,7 @@ namespace GalaxyAPI.V01.Models
             return View();
         }
 
-        public IActionResult SaveGuidAPIAct(string api_name, int api_group, string api_descr, int[] api_roles, string id_field,string fields,string table_name,string query_content)
+        public IActionResult SaveGuidAPIAct(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field,string fields,string table_name,string query_content)
         {
             string apiDbType = HttpContext.Session.GetString("databaseType");
             RSACrypto rsaCrypto = new RSACrypto(RSAHelper.PRIVATE_KEY, RSAHelper.PUBLIC_KEY);
@@ -181,7 +208,8 @@ namespace GalaxyAPI.V01.Models
             string user = rsaCrypto.Decrypt(HttpContext.Session.GetString("user"));
             string pwd = HttpContext.Session.GetString("pwd");
             string create_user = HttpContext.Session.GetString("userName");
-            int rs = apiDataHelper.AddGuideAPI(api_name, api_group, api_descr, api_roles, id_field, fields, table_name, query_content, apiDbType, ip, database, user, pwd, create_user);
+            query_content = query_content == null ? "" : query_content;
+            int rs = apiDataHelper.AddGuideAPI(api_code,api_name, api_group, api_descr, api_roles, id_field, fields, table_name, query_content, apiDbType, ip, database, user, pwd, create_user);
             return Content(rs.ChkNonQuery());
         }
 
@@ -229,7 +257,7 @@ namespace GalaxyAPI.V01.Models
 
             }
             string sql = string.Empty;
-            if (database_type == "sqlServer")
+            if (database_type == MyConfig.ConfigManager.DB_TYPE_SQL)
             {
                 if (string.IsNullOrEmpty(query_content))
                 {
@@ -252,7 +280,7 @@ namespace GalaxyAPI.V01.Models
                 string user = rsaCrypto.Decrypt(HttpContext.Session.GetString("user"));
                 string pwd = rsaCrypto.Decrypt(HttpContext.Session.GetString("pwd"));
                 DatabaseAbs dataHelper = apiDataHelper.GetSqlHelper(database_type, ip, database, user, pwd);
-                if (database_type == "sqlServer")
+                if (database_type == MyConfig.ConfigManager.DB_TYPE_SQL)
                 {
                     SqlParameter startParam = new SqlParameter("@start", start);
                     SqlParameter endParam = new SqlParameter("@end", end);
@@ -287,7 +315,7 @@ namespace GalaxyAPI.V01.Models
             List<SelectListItem> tblList = null;
             string sql = string.Empty;
             DataTable tbl = null;
-            if (databaseType == "sqlServer")
+            if (databaseType == MyConfig.ConfigManager.DB_TYPE_SQL)
             {
                 sql = @"select name from sysobjects where xtype='U' or xtype='V';";
                 tbl = ((SqlHelper)dataHelper).GetDataTbl(sql);
@@ -324,7 +352,7 @@ namespace GalaxyAPI.V01.Models
             DatabaseAbs dataHelper = apiDataHelper.GetSqlHelper(databaseType, ip, database, user, pwd);
             string sql = string.Empty;
             DataTable tbl = null;
-            if (dataHelper.databaseType == "sqlServer")
+            if (dataHelper.databaseType == MyConfig.ConfigManager.DB_TYPE_SQL)
             {
                 sql = string.Format(@"select syscolumns.name from syscolumns where id=object_id('{0}')", tableName);
                 tbl = ((SqlHelper)dataHelper).GetDataTbl(sql);
