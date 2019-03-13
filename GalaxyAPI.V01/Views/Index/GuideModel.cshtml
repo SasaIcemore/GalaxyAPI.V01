@@ -37,22 +37,36 @@
                         <div>
                             <h4>筛选条件：</h4>
                             <div class="row">
+                                <div class="col-md-2">逻辑</div>
+                                <div class="col-md-3">字段</div>
+                                <div class="col-md-3">操作符</div>
+                                <div class="col-md-3">值</div>
+                            </div>
+                            <div class="row">
                                 <div class="col-md-2">
+                                    <select id="logic">
+                                        <option value="and">and</option>
+                                        <option value="or">or</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
                                     <select id="sel_query_field"></select>
                                 </div>
-                                <div class="col-md-1">
+                                <div class="col-md-3">
                                     <select id="operation">
                                         <option value=">">></option>
                                         <option value="<"><</option>
                                         <option value="=">=</option>
                                         <option value="!=">!=</option>
                                         <option value="like">like</option>
-                                        <option value="in">in</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2">
+                                <div class="col-md-3">
                                     <input type="text" id="query_val" value="" size="6" />
                                 </div>
+                            </div>
+                            <br />
+                            <div class="row">
                                 <div class="col-md-1">
                                     <div class="btn btn-info btn-sm" id="add_query">=></div>
                                 </div>
@@ -151,6 +165,7 @@
 
             //生成字段的查询条件
             $("#add_query").click(function () {
+                var logic = $("#logic").val();
                 var field = $("#sel_query_field").val();
                 var operation = $("#operation").val();
                 var field_val = $("#query_val").val();
@@ -178,7 +193,7 @@
                 params_operation_div.attr({ "class": "col-md-2" }).text(operation).appendTo(div_row);
 
                 var params_val_div = $("<div><div>");
-                params_val_div.attr({ "class": "col-md-2 filter_text" }).text(" and " + formatParamVal(operation, field, field_val)).appendTo(div_row);
+                params_val_div.attr({ "class": "col-md-2 filter_text" }).text(" " + logic+" " + formatParamVal(operation, field, field_val)).appendTo(div_row);
 
                 var params_val_div = $("<div><div>");
                 params_val_div.attr({ "class": "col-md-2" }).html('<div class="btn btn-warning btn-sm" row_clear="row_clear">清除</div >').appendTo(div_row);
@@ -301,9 +316,6 @@
             var content_part = "";
             if (operation == "like") {
                 content_part = field + " like \'%" + field_val + "%\'";
-            }
-            else if (operation == "in") {
-                content_part = field + " " + operation + "(" + field_val + ")";
             }
             else {
                 content_part = field + operation + field_val;
