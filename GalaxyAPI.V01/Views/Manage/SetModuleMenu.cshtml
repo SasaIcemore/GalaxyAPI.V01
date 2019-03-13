@@ -143,7 +143,8 @@
                         async: false,
                         data: {
                             "module_id": '@ViewData["module_id"]',
-                            "is_del": '@ViewData["is_del"]'
+                            "is_del": '@ViewData["is_del"]',
+                            "module_index": $("#module_fir_page").val()
                         },
                         success: function (data) {
                             $("#content_body").html(data);
