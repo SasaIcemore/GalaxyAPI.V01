@@ -19,6 +19,7 @@ namespace GalaxyAPI.V01.Models
     public class IndexController : Controller
     {
         private APIDataHelper apiDataHelper = new APIDataHelper();
+        private BackManage manage = new BackManage();
         private string apiSql = string.Empty;
 
         [ValidateAntiForgeryToken]
@@ -92,7 +93,7 @@ namespace GalaxyAPI.V01.Models
         }
 
         /// <summary>
-        /// API列表
+        /// API列表视图
         /// </summary>
         /// <returns></returns>
         public IActionResult APIList()
@@ -100,32 +101,38 @@ namespace GalaxyAPI.V01.Models
             return View();
         }
 
-        ///// <summary>
-        ///// api参数配置视图
-        ///// </summary>
-        ///// <returns></returns>
-        //public IActionResult ApiParams()
-        //{
-        //    return View();
-        //}
+        /// <summary>
+        /// 获取api列表数据
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult GetApiList()
+        {
+            //获取用户id和用户角色
+            int userId = manage.GetUserId(HttpContext.Session.GetString("userName"), HttpContext.Session.GetString("password"));
+            DataTable userTbl = manage.GetUserInfo(false, userId);
+            int role = 0;
+            if (userTbl != null)
+            {
+                if (userTbl.Rows.Count > 0)
+                {
+                    role = userTbl.Rows[0]["role_id"].ChkDBNullToInt();
+                }
+            }
+            //获取对应角色未禁用的api
+            DataTable apiTbl = apiDataHelper.GetAPIList(role);
+            string jsonStr = "";
+            if (apiTbl != null)
+            {
+                jsonStr = JsonConvert.SerializeObject(apiTbl);
+            }
+            return Content(jsonStr);
+        }
 
-        ///// <summary>
-        ///// 参数类型视图
-        ///// </summary>
-        ///// <returns></returns>
-        //public IActionResult ApiParamsType()
-        //{
-        //    return View();
-        //}
-
-        ///// <summary>
-        ///// 运算符视图
-        ///// </summary>
-        ///// <returns></returns>
-        //public IActionResult ApiOperation()
-        //{
-        //    return View();
-        //}
+        public IActionResult ApiInfo(string api_code)
+        {
+            ViewData["api_code"] = api_code;
+            return View();
+        }
 
         /// <summary>
         /// 生成数据库连接串，记录数据库信息
