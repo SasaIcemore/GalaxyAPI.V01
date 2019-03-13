@@ -34,15 +34,12 @@ namespace GalaxyAPI.V01.Controllers.galaxy_api
             {
                 paralist = null;
             }
-            
-
             //获取令牌，取得角色id
             string auth = HttpContext.Request.Headers["Authorization"];
             int role_id = 0;
             using (HttpClient client = new HttpClient())
             {
                 client.BaseAddress = new Uri(MyConfig.ConfigManager.AUTHORITY);
-                //client.SetBearerToken(auth.Substring(7));
                 client.DefaultRequestHeaders.Add("Authorization", auth);
                 var t = client.GetAsync("/connect/userinfo");
                 t.Wait();
@@ -57,7 +54,15 @@ namespace GalaxyAPI.V01.Controllers.galaxy_api
             {
                 APIDataHelper datahelper = new APIDataHelper();
                 DataTable tbl = datahelper.GetGuideAPIByCode(apiCode, pCount, pNum, paralist);
-                string jsonStr = JsonConvert.SerializeObject(tbl);
+                string jsonStr = string.Empty;
+                if (tbl != null)
+                {
+                    jsonStr = JsonConvert.SerializeObject(tbl);
+                }
+                else
+                {
+                    jsonStr = "";
+                }
                 return Content(jsonStr);
             } 
             else
