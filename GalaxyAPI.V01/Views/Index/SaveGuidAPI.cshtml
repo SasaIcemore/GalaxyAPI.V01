@@ -21,7 +21,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="form-group">
+        <div class="form-group"> 
             <div class="input-group">
                 <span class="input-group-addon"><font color="red">*</font>API代码：</span>
                 <input type="text" class="form-control" name="api_code" id="api_code" placeholder="" AUTOCOMPLETE="off" />
@@ -39,7 +39,9 @@
                 <input type="text" class="form-control" name="api_descr" id="api_descr" placeholder="" />
             </div>
         </div>
+        <br />
         <div class="form-group" style="display:inline-block">
+            <font color="red">*</font>分组设置：
             <select class="selectpicker" id="sel_api_group"></select>
         </div>
         <a href="#" class="add_api_group"><span class="glyphicon glyphicon-plus"></span>添加分组</a>
@@ -64,7 +66,7 @@
                         var option = $("<option></option>");
                         option.val(jsonObj[i]["id"]).text(jsonObj[i]["role_name"]).appendTo(sel_roles);
                     }
-                    $('#sel_roles').selectpicker('refresh');//动态刷新
+                    $('#sel_roles').selectpicker('refresh');//刷新
                 }
             });
             //初始化角色下拉框
@@ -82,9 +84,15 @@
                         var option = $("<option></option>");
                         option.val(jsonObj[i]["id"]).text(jsonObj[i]["group_name"]).appendTo(sel_api_group);
                     }
-                    $('#sel_api_group').selectpicker('refresh');//动态刷新
+                    $('#sel_api_group').selectpicker('refresh');//刷新
                 }
             });
+
+            Request = GetRequest();
+            var id_field = Request["id_field"];
+            var fields = Request["fields"];
+            var table_name = Request["table_name"];
+            var params_str = Request["params_str"];
 
             //添加api分组
             $(".add_api_group").click(function () {
@@ -118,11 +126,7 @@
                     layer.msg("请配置权限");
                     return;
                 }
-                Request = GetRequest();
-                var id_field = Request["id_field"];
-                var fields = Request["fields"];
-                var table_name = Request["table_name"];
-                var query_content = Request["query_content"];
+
                 $.ajax({
                     url: "/Index/SaveGuidAPIAct",
                     type: "post",
@@ -136,7 +140,8 @@
                         "id_field": id_field,
                         "fields": fields,
                         "table_name": table_name,
-                        "query_content": query_content
+                        "query_content": "",
+                        "params_str": params_str
                     },
                     success: function (data) {
                         layer.msg(data);
