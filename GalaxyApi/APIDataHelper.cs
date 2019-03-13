@@ -105,7 +105,7 @@ namespace GalaxyApi
         /// <param name="pwd"></param>
         /// <param name="create_user"></param>
         /// <returns></returns>
-        public int AddGuideAPI(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field, string fields, string table_name, string query_content, string apiDbType, string ip, string db_name, string user, string pwd,string create_user)
+        public int AddGuideAPI(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field, string fields, string table_name, string query_content, string apiDbType, string ip, string db_name, string user, string pwd,string create_user, string params_str)
         {
             try
             {
@@ -151,12 +151,21 @@ namespace GalaxyApi
                 int api_info_id = MyConfig.ConfigManager.dataHelper.GetFristData(insert_api_info, apiCodeParam, apiNameParam, descrParam, queryParam).ChkDBNullToInt();//获取刚插入的id
 
                 List<string> sqlList = new List<string>();
+                string sql = string.Empty;
                 if (api_roles != null && api_roles.Length > 0)
                 {
-                    string sql = string.Empty;
                     foreach (int i in api_roles)
                     {
                         sql = string.Format(@"insert into public.api_role(api_id, role_id, create_tm, is_del) values({0},{1},now(),false)", api_info_id, i);
+                        sqlList.Add(sql);
+                    }
+                }
+                if (!string.IsNullOrEmpty(params_str))
+                {
+                    string[] paraArr = params_str.Split(',');
+                    foreach (string para in paraArr)
+                    {
+                        sql = string.Format(@"insert into public.api_params (api_id,params_name,create_user) values ({0},'{1}','{2}')", api_info_id, para, create_user);
                         sqlList.Add(sql);
                     }
                 }
@@ -183,7 +192,7 @@ namespace GalaxyApi
         /// <param name="p_count"></param>
         /// <param name="p_num"></param>
         /// <returns></returns>
-        public DataTable GetGuideAPIByCode(string api_code, int p_count, int p_num)
+        public DataTable GetGuideAPIByCode(string api_code, int p_count, int p_num, List<APIParamsFilter> paralist)
         {
             //保存的api_db_pwd是加密字符，使用时需RSACrypto解密
             RSACrypto rsaCrypto = new RSACrypto(RSAHelper.PRIVATE_KEY, RSAHelper.PUBLIC_KEY);
@@ -207,7 +216,6 @@ namespace GalaxyApi
                         id_field = dr["id_field"].ChkDBNullToStr(),
                         fields = dr["fields"].ChkDBNullToStr(),
                         table_name = dr["table_name"].ChkDBNullToStr(),
-                        query_content = dr["query_content"].ChkDBNullToStr(),
                         api_code = dr["api_code"].ChkDBNullToStr()
                     };
                 },codeParam);
@@ -218,28 +226,69 @@ namespace GalaxyApi
                 DataTable tbl = null;
                 int start = (p_num - 1) * p_count;
                 int end = p_num * p_count;
-                if (apiInfo.api_db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
+
+                //处理过滤参数
+                string query_filter = string.Empty;
+                int flag = 0;
+                ParamsArr paraArr = null;
+                //如果有参数传入
+                if (paralist != null)
                 {
-                    selSql = string.Format(MyConfig.ConfigManager.sqlServerQuery, apiInfo.id_field, apiInfo.fields, apiInfo.table_name, apiInfo.query_content);
-                    SqlParameter startParam = new SqlParameter("@start", start);
-                    SqlParameter endParam = new SqlParameter("@end", end);
-                    ParamsArr paraArr = new ParamsArr(2, MyConfig.ConfigManager.DB_TYPE_SQL);
-                    paraArr.sqlParamArr[0] = startParam;
-                    paraArr.sqlParamArr[1] = endParam;
-                    tbl = ((SqlHelper)dataHelper).GetDataTbl(selSql, startParam, endParam);
-                    //tbl = ((SqlHelper)dataHelper).GetDataTbl(selSql,true,paraArr);
+                    int length = paralist.Count + 2;
+                    if (apiInfo.api_db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
+                    {
+                        paraArr = new ParamsArr(length, MyConfig.ConfigManager.DB_TYPE_SQL);
+                        foreach (APIParamsFilter filter in paralist)
+                        {
+                            query_filter += " and " + filter.ParamName + " " + filter.Operation + " " + "@" + filter.ParamName + " ";
+                            SqlParameter para = new SqlParameter("@" + filter.ParamName, filter.Value);
+                            paraArr.sqlParamArr[flag] = para;
+                            flag++;
+                        }
+                        SqlParameter startParam = new SqlParameter("@start", start);
+                        SqlParameter endParam = new SqlParameter("@end", end);
+                        paraArr.sqlParamArr[length - 2] = startParam;
+                        paraArr.sqlParamArr[length - 1] = endParam;
+
+                        selSql = string.Format(MyConfig.ConfigManager.sqlServerQuery, apiInfo.id_field, apiInfo.fields, apiInfo.table_name, query_filter);
+                        tbl = ((SqlHelper)dataHelper).GetDataTbl(selSql, true, paraArr);
+                    }
+                    else
+                    {
+                        paraArr = new ParamsArr(length, MyConfig.ConfigManager.DB_TYPE_PGSQL);
+                        foreach (APIParamsFilter filter in paralist)
+                        {
+                            query_filter += " and " + filter.ParamName + " " + filter.Operation + " " + "@" + filter.ParamName + " ";
+                            NpgsqlParameter para = new NpgsqlParameter("@" + filter.ParamName, filter.Value);
+                            paraArr.npgsqlParamArr[flag] = para;
+                            flag++;
+                        }
+                        NpgsqlParameter pCountParam = new NpgsqlParameter("@pCount", p_count);
+                        NpgsqlParameter startParam = new NpgsqlParameter("@start", start);
+                        paraArr.npgsqlParamArr[length - 2] = startParam;
+                        paraArr.npgsqlParamArr[length - 1] = pCountParam;
+
+                        selSql = string.Format(MyConfig.ConfigManager.postgreSqlQuery, apiInfo.fields, apiInfo.table_name, query_filter);
+                        tbl = ((NpgsqlHelper)dataHelper).GetDataTbl(selSql, true, paraArr);
+                    }
+
                 }
                 else
                 {
-                    selSql = string.Format(MyConfig.ConfigManager.postgreSqlQuery, apiInfo.fields, apiInfo.table_name, apiInfo.query_content);
-                    NpgsqlParameter pCountParam = new NpgsqlParameter("@pCount", p_count);
-                    NpgsqlParameter startParam = new NpgsqlParameter("@start", start);
-
-                    ParamsArr paraArr = new ParamsArr(2, MyConfig.ConfigManager.DB_TYPE_PGSQL);
-                    paraArr.npgsqlParamArr[0] = startParam;
-                    paraArr.npgsqlParamArr[1] = pCountParam;
-                    tbl = ((NpgsqlHelper)dataHelper).GetDataTbl(selSql, pCountParam, startParam);
-                    //tbl = ((NpgsqlHelper)dataHelper).GetDataTbl(selSql, true, paraArr);
+                    if (apiInfo.api_db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
+                    {
+                        selSql = string.Format(MyConfig.ConfigManager.sqlServerQuery, apiInfo.id_field, apiInfo.fields, apiInfo.table_name, apiInfo.query_content);
+                        SqlParameter startParam = new SqlParameter("@start", start);
+                        SqlParameter endParam = new SqlParameter("@end", end);
+                        tbl = ((SqlHelper)dataHelper).GetDataTbl(selSql, startParam, endParam);
+                    }
+                    else
+                    {
+                        selSql = string.Format(MyConfig.ConfigManager.postgreSqlQuery, apiInfo.fields, apiInfo.table_name, apiInfo.query_content);
+                        NpgsqlParameter pCountParam = new NpgsqlParameter("@pCount", p_count);
+                        NpgsqlParameter startParam = new NpgsqlParameter("@start", start);
+                        tbl = ((NpgsqlHelper)dataHelper).GetDataTbl(selSql, pCountParam, startParam);
+                    }
                 }
                 return tbl;
             }
