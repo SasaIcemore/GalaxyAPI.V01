@@ -53,27 +53,15 @@
                                 <div class="col-md-2">
                                     <input type="text" id="query_val" value="" size="6" />
                                 </div>
-                                <div class="col-md-5">
-                                    描述：<input type="text" id="params_descr" value="" size="16" />
-                                </div>
-                            </div>
-                            <br />
-                            <div class="row">
-                                <div class="col-md-2">
-                                    设置为参数<input type="checkbox" id="chk_param" />
-                                </div>
                                 <div class="col-md-1">
                                     <div class="btn btn-info btn-sm" id="add_query">=></div>
                                 </div>
-                                <div class="col-md-3" style="border:thin solid #cccccc" id="query_content"></div>
-                                <div class="col-md-1">
-                                    <div class="btn btn-warning btn-sm" id="clear_query_content">清除</div>
-                                </div>
                             </div>
+                            <br />
                         </div>
                         <br />
                         <h4>参数配置：</h4>
-                        <div id="set_params">
+                        <div id="set_params" style=" width: 90%;">
                             <div class="row" style="border-bottom:thin solid #cccccc">
                                 <div class="col-md-2"><b>参数名</b></div>
                                 <div class="col-md-2"><b>描述</b></div>
@@ -108,7 +96,7 @@
 
                         <div class="btn btn-info" id="setParams">查询</div>
                         <br />
-                        <textarea rows="10" cols="110" name="query_sql" id="query_sql"></textarea>
+                        <textarea rows="10" cols="110" name="query_sql" id="query_sql" style=" width: 90%;"></textarea>
                         <br />
 
                         <br />
@@ -162,11 +150,11 @@
             });
 
             //生成字段的查询条件
-            $("#add_query").click(function () { 
+            $("#add_query").click(function () {
                 var field = $("#sel_query_field").val();
                 var operation = $("#operation").val();
                 var field_val = $("#query_val").val();
-                
+
                 if (field == null) {
                     layer.msg("请选择字段");
                     return;
@@ -177,39 +165,26 @@
                     return;
                 }
 
-                var content_part = "";
-                if (operation == "like") {
-                    content_part = field + " like \'%" + field_val +"%\'";
-                }
-                else if (operation == "in") { 
-                    content_part = field + " "+ operation + "("+ field_val + ")";
-                }
-                else { 
-                    content_part = field + operation + field_val;
-                }
-                
-                var query = $("#query_content").text();
-                query = query +" and " + content_part;
-                $("#query_content").text(query);
-
                 var div_row = $("<div></div>");
-                div_row.attr({ "class": "row" }).css({ "border-bottom":"thin solid #cccccc"}).appendTo($("#set_params"));
+                div_row.attr({ "class": "row" }).css({ "border-bottom": "thin solid #cccccc" }).appendTo($("#set_params"));
 
                 var params_name_div = $("<div></div>");
-                params_name_div.attr({ "class": "col-md-2" }).text(field).appendTo(div_row);
+                params_name_div.attr({ "class": "col-md-2 params" }).text(field).appendTo(div_row);
 
                 var params_descr_div = $("<div><div>");
-                params_descr_div.attr({ "class": "col-md-2" }).text($("#params_descr").val()).appendTo(div_row);
+                params_descr_div.attr({ "class": "col-md-2" }).text(" ").appendTo(div_row);
 
                 var params_operation_div = $("<div><div>");
                 params_operation_div.attr({ "class": "col-md-2" }).text(operation).appendTo(div_row);
 
                 var params_val_div = $("<div><div>");
-                params_val_div.attr({ "class": "col-md-2" }).text(field_val).appendTo(div_row);
+                params_val_div.attr({ "class": "col-md-2 filter_text" }).text(" and " + formatParamVal(operation, field, field_val)).appendTo(div_row);
 
                 var params_val_div = $("<div><div>");
-                params_val_div.attr({ "class": "col-md-2" }).html('<div class="btn btn-warning btn-sm" row_clear="1">清除</div >').appendTo(div_row);
-
+                params_val_div.attr({ "class": "col-md-2" }).html('<div class="btn btn-warning btn-sm" row_clear="row_clear">清除</div >').appendTo(div_row);
+                params_val_div.on('click', function () {
+                    div_row.remove();
+                });
             });
 
             //清除字段的查询条件
@@ -225,7 +200,7 @@
                 fields = "";
                 id_field = "";
                 var db_type = $("#hid_database_type").val();
-                var chk_fields = $("input[type='checkbox']:checked");
+                var chk_fields = $(".chk_field:checked");
                 if (chk_fields.length > 0) {
                     if (db_type == "sqlServer") {
                         id_field = chk_fields.val();
@@ -239,7 +214,7 @@
                     }
 
                 } else {
-                    var chk_all_fields = $("input[type='checkbox']");
+                    var chk_all_fields = $(".chk_field");
                     if (db_type == "sqlServer") {
                         id_field = chk_all_fields.val();
                         chk_all_fields.each(function () {
@@ -258,8 +233,13 @@
                 if (page_num == "" || isNaN(page_num)) {
                     page_num = 1;
                 }
-                var query_content = $("#query_content").text();
-
+                
+                var filter_str = "";
+                var filter = $(".filter_text");
+                filter.each(function () {
+                    filter_str = filter_str + $(this).text();
+                });
+                var query_content = $("#query_content").text() + filter_str;
                 $.ajax({
                     url: "/index/MakeSql",
                     type: "post",
@@ -279,6 +259,7 @@
                 });
             });
 
+            //刷新
             $("#reload_page").click(function () {
                 $.ajax({
                     url: "/Index/GuideModel",
@@ -294,16 +275,41 @@
             });
 
             $("#save_api").click(function () { 
+                if (fields=="") { 
+                    layer.msg("请选择字段");
+                    return;
+                }
+                var params_str = "";
+                var params = $(".params");
+                params.each(function () {
+                    params_str = params_str + $(this).text()+",";
+                });
+                params_str = params_str.substring(0, params_str.length - 1);
+
                 layer.open({
                     type: 2,
                     title: '保存API',
                     shadeClose: true,
                     shade: 0.8,
-                    area: ['500px', '450px'],
-                    content: '/Index/SaveGuidAPI?id_field=' + id_field + '&fields=' + fields + '&table_name=' + $("#tblNameList").val() + '&query_content=' + $("#query_content").text().replace("'","\'")
+                    area: ['700px', '550px'],
+                    content: '/Index/SaveGuidAPI?id_field=' + id_field + '&fields=' + fields + '&table_name=' + $("#tblNameList").val() + '&params_str=' + params_str
                 });
+
             });
         });
+        function formatParamVal(operation, field, field_val) { 
+            var content_part = "";
+            if (operation == "like") {
+                content_part = field + " like \'%" + field_val + "%\'";
+            }
+            else if (operation == "in") {
+                content_part = field + " " + operation + "(" + field_val + ")";
+            }
+            else {
+                content_part = field + operation + field_val;
+            }
+            return content_part;
+        }
     </script>
 </body>
 </html>
