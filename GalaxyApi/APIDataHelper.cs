@@ -198,6 +198,7 @@ namespace GalaxyApi
             RSACrypto rsaCrypto = new RSACrypto(RSAHelper.PRIVATE_KEY, RSAHelper.PUBLIC_KEY);
             string sql = @"select * from public.api_info where api_code=@api_code";
             NpgsqlParameter codeParam = new NpgsqlParameter("@api_code", api_code);
+            //获取api信息
             ApiInfo apiInfo = MyConfig.ConfigManager.dataHelper.GetData(sql, 
                 delegate (NpgsqlDataReader dr) {
                     return new ApiInfo
@@ -219,6 +220,7 @@ namespace GalaxyApi
                         api_code = dr["api_code"].ChkDBNullToStr()
                     };
                 },codeParam);
+            //如果找到了对应的api
             if (apiInfo != null)
             {
                 dataHelper = GetSqlHelper(apiInfo.api_db_type, apiInfo.api_db_ip, apiInfo.api_db_name, apiInfo.api_db_user, apiInfo.api_db_pwd);
@@ -229,7 +231,6 @@ namespace GalaxyApi
 
                 //处理过滤参数
                 string query_filter = string.Empty;
-                int flag = 0;
                 ParamsArr paraArr = null;
                 //如果有参数传入
                 if (paralist != null)
@@ -237,42 +238,28 @@ namespace GalaxyApi
                     int length = paralist.Count + 2;
                     if (apiInfo.api_db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
                     {
-                        paraArr = new ParamsArr(length, MyConfig.ConfigManager.DB_TYPE_SQL);
-                        foreach (APIParamsFilter filter in paralist)
-                        {
-                            query_filter += " and " + filter.ParamName + " " + filter.Operation + " " + "@" + filter.ParamName + " ";
-                            SqlParameter para = new SqlParameter("@" + filter.ParamName, filter.Value);
-                            paraArr.sqlParamArr[flag] = para;
-                            flag++;
-                        }
+                        query_filter = GetFilterStr(paralist);
+                        paraArr = GetParamsArr(MyConfig.ConfigManager.DB_TYPE_SQL, paralist);
                         SqlParameter startParam = new SqlParameter("@start", start);
                         SqlParameter endParam = new SqlParameter("@end", end);
                         paraArr.sqlParamArr[length - 2] = startParam;
                         paraArr.sqlParamArr[length - 1] = endParam;
-
                         selSql = string.Format(MyConfig.ConfigManager.sqlServerQuery, apiInfo.id_field, apiInfo.fields, apiInfo.table_name, query_filter);
                         tbl = ((SqlHelper)dataHelper).GetDataTbl(selSql, true, paraArr);
                     }
                     else
                     {
-                        paraArr = new ParamsArr(length, MyConfig.ConfigManager.DB_TYPE_PGSQL);
-                        foreach (APIParamsFilter filter in paralist)
-                        {
-                            query_filter += " and " + filter.ParamName + " " + filter.Operation + " " + "@" + filter.ParamName + " ";
-                            NpgsqlParameter para = new NpgsqlParameter("@" + filter.ParamName, filter.Value);
-                            paraArr.npgsqlParamArr[flag] = para;
-                            flag++;
-                        }
+                        query_filter = GetFilterStr(paralist);
+                        paraArr = GetParamsArr(MyConfig.ConfigManager.DB_TYPE_PGSQL, paralist);
                         NpgsqlParameter pCountParam = new NpgsqlParameter("@pCount", p_count);
                         NpgsqlParameter startParam = new NpgsqlParameter("@start", start);
                         paraArr.npgsqlParamArr[length - 2] = startParam;
                         paraArr.npgsqlParamArr[length - 1] = pCountParam;
-
                         selSql = string.Format(MyConfig.ConfigManager.postgreSqlQuery, apiInfo.fields, apiInfo.table_name, query_filter);
                         tbl = ((NpgsqlHelper)dataHelper).GetDataTbl(selSql, true, paraArr);
                     }
-
                 }
+                //没有参数传入
                 else
                 {
                     if (apiInfo.api_db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
@@ -296,7 +283,6 @@ namespace GalaxyApi
             {
                 return null;
             }
-            
         }
 
         /// <summary>
@@ -327,6 +313,90 @@ namespace GalaxyApi
                 }
             }
             return canUse;
+        }
+
+        /// <summary>
+        /// 生成过滤字符串
+        /// </summary>
+        /// <param name="paralist">参数集合</param>
+        /// <returns></returns>
+        private string GetFilterStr(List<APIParamsFilter> paralist)
+        {
+            string query_filter = string.Empty;
+            foreach (APIParamsFilter filter in paralist)
+            {
+                query_filter += filter.Logic + " " + filter.ParamName + " " + filter.Operation + " " + "@" + filter.ParamName + " ";
+            }
+            return query_filter;
+        }
+
+        /// <summary>
+        /// 生成参数数组
+        /// </summary>
+        /// <param name="db_type">数据库类型</param>
+        /// <param name="paralist">参数集合</param>
+        /// <returns></returns>
+        private ParamsArr GetParamsArr(string db_type, List<APIParamsFilter> paralist)
+        {
+            ParamsArr paraArr = null;
+            if (paralist != null)
+            {
+                paraArr = new ParamsArr(paralist.Count + 2, db_type);
+                int flag = 0;
+                //sqlServer
+                if (db_type == MyConfig.ConfigManager.DB_TYPE_SQL)
+                {
+                    foreach (APIParamsFilter filter in paralist)
+                    {
+                        SqlParameter para = null;
+                        if (filter.Operation == "like")
+                        {
+                            para = new SqlParameter("@" + filter.ParamName, "%" + filter.Value.Trim() + "%");
+                        }
+                        else
+                        {
+                            para = new SqlParameter("@" + filter.ParamName, filter.Value.Trim());
+                        }
+                        if (para != null)
+                        {
+                            paraArr.sqlParamArr[flag] = para;
+                        }
+                        flag++;
+                    }
+                }
+                else
+                {
+                    foreach (APIParamsFilter filter in paralist)
+                    {
+                        NpgsqlParameter para = null;
+                        if (filter.Operation == "like")
+                        {
+                            para = new NpgsqlParameter("@" + filter.ParamName, "%" + filter.Value.Trim() + "%");
+                        }
+                        else
+                        {
+                            para = new NpgsqlParameter("@" + filter.ParamName, filter.Value.Trim());
+                        }
+                        if (para != null)
+                        {
+                            paraArr.npgsqlParamArr[flag] = para;
+                        }
+                        flag++;
+                    }
+                }
+            }
+            return paraArr;
+        }
+
+        public DataTable GetAPIList(int role_id)
+        {
+            sql = @"select a.id,a.api_code,api_name,a.descr,group_name from public.api_info a
+                    left join public.api_role b on a.id=b.api_id
+                    left join public.api_group c on a.apigroup_id = c.id
+                    where a.is_del=false and b.is_del=false and role_id=@role_id";
+            NpgsqlParameter ridParam = new NpgsqlParameter("@role_id", role_id);
+            DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql,ridParam);
+            return tbl;
         }
     }
 }
