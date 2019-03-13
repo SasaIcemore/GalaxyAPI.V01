@@ -199,7 +199,7 @@ namespace GalaxyAPI.V01.Models
             return View();
         }
 
-        public IActionResult SaveGuidAPIAct(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field,string fields,string table_name,string query_content)
+        public IActionResult SaveGuidAPIAct(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field,string fields,string table_name,string query_content, string params_str)
         {
             string apiDbType = HttpContext.Session.GetString("databaseType");
             RSACrypto rsaCrypto = new RSACrypto(RSAHelper.PRIVATE_KEY, RSAHelper.PUBLIC_KEY);
@@ -209,7 +209,7 @@ namespace GalaxyAPI.V01.Models
             string pwd = HttpContext.Session.GetString("pwd");
             string create_user = HttpContext.Session.GetString("userName");
             query_content = query_content == null ? "" : query_content;
-            int rs = apiDataHelper.AddGuideAPI(api_code,api_name, api_group, api_descr, api_roles, id_field, fields, table_name, query_content, apiDbType, ip, database, user, pwd, create_user);
+            int rs = apiDataHelper.AddGuideAPI(api_code,api_name, api_group, api_descr, api_roles, id_field, fields, table_name, query_content, apiDbType, ip, database, user, pwd, create_user, params_str);
             return Content(rs.ChkNonQuery());
         }
 
