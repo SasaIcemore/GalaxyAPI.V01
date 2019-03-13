@@ -269,18 +269,18 @@ namespace Tools.pgsql
 
                             if (!mark)//如果有某一条执行失败，就回滚
                             {
-                                transaction.Rollback(); //事务回滚
+                                transaction.Rollback(); //回滚
                                 return false;
                             }
                             else
                             {
-                                transaction.Commit();   //事务提交
+                                transaction.Commit();   //提交
                                 return true;
                             }
                         }
                         catch (Exception e)
                         {
-                            transaction.Rollback(); //事务回滚
+                            transaction.Rollback(); //回滚
 
                             throw e;
                         }
