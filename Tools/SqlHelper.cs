@@ -64,7 +64,7 @@ namespace Tools.sql
         public DataTable GetDataTbl(string sql, bool flag, params ParamsArr[] paramArr)
         {
             DataTable table = new DataTable();
-            NpgsqlDataAdapter adapter = new NpgsqlDataAdapter(sql, strConn);
+            SqlDataAdapter adapter = new SqlDataAdapter(sql, strConn);
             adapter.SelectCommand.Parameters.AddRange(paramArr[0].sqlParamArr);
             adapter.Fill(table);
             adapter.SelectCommand.Parameters.Clear();
