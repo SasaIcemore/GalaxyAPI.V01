@@ -1,5 +1,6 @@
 ﻿using GalaxyApi.Model;
 using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -351,11 +352,11 @@ namespace GalaxyApi
                         SqlParameter para = null;
                         if (filter.Operation == "like")
                         {
-                            para = new SqlParameter("@" + filter.ParamName, "%" + filter.Value.Trim() + "%");
+                            para = new SqlParameter("@" + filter.ParamName, "%" + FormatFilterValue(filter.ValueType, filter.Value.Trim()) + "%");
                         }
                         else
                         {
-                            para = new SqlParameter("@" + filter.ParamName, filter.Value.Trim());
+                            para = new SqlParameter("@" + filter.ParamName, FormatFilterValue(filter.ValueType, filter.Value.Trim()));
                         }
                         if (para != null)
                         {
@@ -371,11 +372,11 @@ namespace GalaxyApi
                         NpgsqlParameter para = null;
                         if (filter.Operation == "like")
                         {
-                            para = new NpgsqlParameter("@" + filter.ParamName, "%" + filter.Value.Trim() + "%");
+                            para = new NpgsqlParameter("@" + filter.ParamName, "%" + FormatFilterValue(filter.ValueType, filter.Value.Trim()) + "%" );
                         }
                         else
                         {
-                            para = new NpgsqlParameter("@" + filter.ParamName, filter.Value.Trim());
+                            para = new NpgsqlParameter("@" + filter.ParamName, FormatFilterValue(filter.ValueType, filter.Value.Trim()));
                         }
                         if (para != null)
                         {
@@ -388,6 +389,38 @@ namespace GalaxyApi
             return paraArr;
         }
 
+        /// <summary>
+        /// 处理参数类型
+        /// </summary>
+        /// <param name="valueType"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        private dynamic FormatFilterValue(string valueType, string value)
+        {
+            dynamic val = null;
+            switch (valueType)
+            {
+                case "string":
+                    val = value;
+                    break;
+                case "int":
+                    val = Convert.ToInt32(value);
+                    break;
+                case "bool":
+                    val = Convert.ToBoolean(value);
+                    break;
+                case "double":
+                    val = Convert.ToDouble(value);
+                    break;
+            }
+            return val;
+        }
+
+        /// <summary>
+        /// 获取api列表
+        /// </summary>
+        /// <param name="role_id"></param>
+        /// <returns></returns>
         public DataTable GetAPIList(int role_id)
         {
             sql = @"select a.id,a.api_code,api_name,a.descr,group_name from public.api_info a
