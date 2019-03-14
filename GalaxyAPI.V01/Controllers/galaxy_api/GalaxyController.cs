@@ -13,7 +13,7 @@ using System.Net.Http;
 
 namespace GalaxyAPI.V01.Controllers.galaxy_api
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [EnableCors("any")]
     public class GalaxyController : Controller
@@ -46,7 +46,7 @@ namespace GalaxyAPI.V01.Controllers.galaxy_api
                 var result = t.Result;
                 var resultContent = result.Content.ReadAsStringAsync().Result;
                 ConnectUserInfo userInfo = JsonConvert.DeserializeObject<ConnectUserInfo>(resultContent);
-                role_id = userInfo.role;
+                role_id = userInfo == null ? 0 : userInfo.role;
             }
             //是否有权调用api
             bool canUse = dataHelper.IsGetApi(role_id, apiCode);
