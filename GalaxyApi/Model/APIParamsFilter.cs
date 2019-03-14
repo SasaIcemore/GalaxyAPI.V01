@@ -12,7 +12,8 @@ namespace GalaxyApi.Model
         public string ParamName { get; set; }
         //操作符
         public string Operation { get; set; }
-        //public string ValueType { get; set; }
+        //参数类型
+        public string ValueType { get; set; }
         //参数值
         public string Value { get; set; }
     }
