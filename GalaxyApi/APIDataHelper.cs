@@ -108,9 +108,18 @@ namespace GalaxyApi
         /// <returns></returns>
         public int AddGuideAPI(string api_code, string api_name, int api_group, string api_descr, int[] api_roles, string id_field, string fields, string table_name, string query_content, string apiDbType, string ip, string db_name, string user, string pwd,string create_user, string params_str)
         {
-            try
+            using (NpgsqlConnection connection = new NpgsqlConnection(MyConfig.ConfigManager.strConn))
             {
-                string insert_api_info = string.Format(@"insert into public.api_info (
+                connection.Open();
+                using (NpgsqlTransaction transaction = connection.BeginTransaction())
+                {
+                    using (NpgsqlCommand command = connection.CreateCommand())
+                    {
+                        command.Transaction = transaction;  //为命令指定事务
+                        try
+                        {
+                            #region 新增api_info sql
+                            string insert_api_info = string.Format(@"insert into public.api_info (
                                                                     api_code,
                                                                     api_name,
                                                                     descr,
@@ -145,45 +154,125 @@ namespace GalaxyApi
                                                                     fields,
                                                                     table_name
                                                                     );
-                NpgsqlParameter apiCodeParam = new NpgsqlParameter("@api_code", api_code);
-                NpgsqlParameter queryParam = new NpgsqlParameter("@query_content", query_content);
-                NpgsqlParameter apiNameParam = new NpgsqlParameter("@api_name", api_name);
-                NpgsqlParameter descrParam = new NpgsqlParameter("@api_descr", api_descr);
-                int api_info_id = MyConfig.ConfigManager.dataHelper.GetFristData(insert_api_info, apiCodeParam, apiNameParam, descrParam, queryParam).ChkDBNullToInt();//获取刚插入的id
-
-                List<string> sqlList = new List<string>();
-                string sql = string.Empty;
-                if (api_roles != null && api_roles.Length > 0)
-                {
-                    foreach (int i in api_roles)
-                    {
-                        sql = string.Format(@"insert into public.api_role(api_id, role_id, create_tm, is_del) values({0},{1},now(),false)", api_info_id, i);
-                        sqlList.Add(sql);
+                            NpgsqlParameter apiCodeParam = new NpgsqlParameter("@api_code", api_code);
+                            NpgsqlParameter queryParam = new NpgsqlParameter("@query_content", query_content);
+                            NpgsqlParameter apiNameParam = new NpgsqlParameter("@api_name", api_name);
+                            NpgsqlParameter descrParam = new NpgsqlParameter("@api_descr", api_descr);
+                            command.Parameters.Add(apiCodeParam);
+                            command.Parameters.Add(queryParam);
+                            command.Parameters.Add(apiNameParam);
+                            command.Parameters.Add(descrParam);
+                            command.CommandText = insert_api_info;
+                            #endregion
+                            try
+                            {
+                                int api_info_id = command.ExecuteScalar().ChkDBNullToInt();
+                                string sql = string.Empty;
+                                bool flag = false;//执行成功的标记
+                                if (api_roles != null)
+                                {
+                                    foreach (int i in api_roles)
+                                    {
+                                        sql = string.Format(@"insert into public.api_role(api_id, role_id, create_tm, is_del) values({0},{1},now(),false)", api_info_id, i);
+                                        command.CommandText = sql;
+                                        try
+                                        {
+                                            int rs = command.ExecuteNonQuery();
+                                            if (rs <= 0)
+                                            {
+                                                flag = false;
+                                                transaction.Rollback();
+                                            }
+                                            else
+                                            {
+                                                flag = true;
+                                            }
+                                        }
+                                        catch
+                                        {
+                                            flag = false;
+                                            transaction.Rollback(); 
+                                        }
+                                    }
+                                }
+                                if (!string.IsNullOrEmpty(params_str))
+                                {
+                                    try
+                                    {
+                                        List<APIParamsInsert> paramList = Newtonsoft.Json.JsonConvert.DeserializeObject<List<APIParamsInsert>>(params_str);
+                                        foreach (APIParamsInsert param in paramList)
+                                        {
+                                            #region 新增api_params
+                                            sql = string.Format(@"insert into public.api_params (
+                                                                                api_id, 
+                                                                                params_name, 
+                                                                                params_type, 
+                                                                                params_descr, 
+                                                                                create_user
+                                                                                ) values (
+                                                                                {0}, 
+                                                                                @params_name, 
+                                                                                @params_type, 
+                                                                                @params_descr, 
+                                                                                '{1}')", api_info_id, create_user);
+                                            Npgsql.NpgsqlParameter nameParam = new NpgsqlParameter("@params_name", param.param_name);
+                                            Npgsql.NpgsqlParameter typeParam = new NpgsqlParameter("@params_type", param.param_type);
+                                            Npgsql.NpgsqlParameter descr_Param = new NpgsqlParameter("@params_descr", param.param_descr);
+                                            command.Parameters.Add(nameParam);
+                                            command.Parameters.Add(typeParam);
+                                            command.Parameters.Add(descr_Param);
+                                            command.CommandText = sql;
+                                            #endregion
+                                            try
+                                            {
+                                                int rs = command.ExecuteNonQuery();
+                                                if (rs <= 0)
+                                                {
+                                                    flag = false;
+                                                    transaction.Rollback();
+                                                }
+                                                else
+                                                {
+                                                    flag = true;
+                                                }
+                                            }
+                                            catch
+                                            {
+                                                flag = false;
+                                                transaction.Rollback();
+                                            }
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        transaction.Rollback();
+                                    }
+                                }
+                                //标记值为true，没有执行错误
+                                if (flag)
+                                {
+                                    transaction.Commit();
+                                    return 1;
+                                }
+                                else
+                                {
+                                    transaction.Rollback();
+                                }
+                            }
+                            catch
+                            {
+                                transaction.Rollback(); 
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            transaction.Rollback(); 
+                            throw e;
+                        }
                     }
                 }
-                if (!string.IsNullOrEmpty(params_str))
-                {
-                    string[] paraArr = params_str.Split(',');
-                    foreach (string para in paraArr)
-                    {
-                        sql = string.Format(@"insert into public.api_params (api_id,params_name,create_user) values ({0},'{1}','{2}')", api_info_id, para, create_user);
-                        sqlList.Add(sql);
-                    }
-                }
-                MyConfig.ConfigManager.dataHelper.ExecuteTransaction(sqlList, true);
-                if (api_info_id > 0)
-                {
-                    return 1;
-                }
-                else
-                {
-                    return 0;
-                }
             }
-            catch
-            {
-                return 0;
-            }
+            return 0;
         }
 
         /// <summary>
@@ -429,6 +518,25 @@ namespace GalaxyApi
                     where a.is_del=false and b.is_del=false and role_id=@role_id";
             NpgsqlParameter ridParam = new NpgsqlParameter("@role_id", role_id);
             DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql,ridParam);
+            return tbl;
+        }
+         
+        public DataTable SelAPIList(int role_id,string pcode,string pname,string pgroup)
+        {
+            //未完善
+            return null;
+        }
+
+        /// <summary>
+        /// 根据api的id获取api参数
+        /// </summary>
+        /// <param name="api_id"></param>
+        /// <returns></returns>
+        public DataTable GetApiParamsByApiId(int api_id)
+        {
+            sql = @"select params_name,params_descr,params_type from public.api_params where api_id=@api_id";
+            NpgsqlParameter idParam = new NpgsqlParameter("@api_id", api_id);
+            DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql, idParam);
             return tbl;
         }
     }
