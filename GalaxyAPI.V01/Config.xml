@@ -4,6 +4,7 @@
   <userinfo val="http://192.168.0.207:8084/connect/userinfo" descr="idserver 身份信息"></userinfo>
   <authority val="http://192.168.0.207:8084" descr="客户端身份验证"></authority>
   <source DbType="postgresql" Host="192.168.0.207" UserName="postgres" Password="console.write" Database="glxyapi" descr="配置权限的数据库"></source>
+  <local val="http://192.168.0.207:8083" descr="本地路径，api详情页面有引用"></local>
   
   <wx_mp is_use="off" descr="是否启用微信公众号接口 on--启用 off--关闭">
     <token val="console" descr="自己设置的token"></token>
