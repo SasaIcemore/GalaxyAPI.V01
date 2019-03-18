@@ -11,6 +11,147 @@
     <title>ApiInfo</title>
 </head>
 <body>
-    @ViewData["api_code"]
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table table-striped" id="param_table">
+                    <tr>
+                        <th>逻辑</th>
+                        <th>参数名</th>
+                        <th>参数类型</th>
+                        <th>操作符</th>
+                        <th>值</th>
+                        <th>描述</th>
+                    </tr>
+                    <tr>
+                        <td>and</td>
+                        <td>pCount</td>
+                        <td>int</td>
+                        <td>=</td>
+                        <td><input type="text" id="pCount" value="" autocomplete="off" /></td>
+                        <td>每页查询的个数</td>
+                    </tr>
+                    <tr>
+                        <td>and</td>
+                        <td>pNum</td>
+                        <td>int</td>
+                        <td>=</td>
+                        <td><input type="text" id="pNum" value="" autocomplete="off" /></td>
+                        <td>查询第几页</td>
+                    </tr>
+                </table>
+                <br />
+                <div class="btn btn-info" id="sel_api">查询</div>
+                <br />
+                <br />
+                <textarea rows="10" cols="100" id="show_query" style="width:99%"></textarea>
+            </div>
+        </div>
+
+    </div>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            $.ajax({
+                url: "/Index/GetApiParamsByApiId",
+                type: "post",
+                cache: false,
+                data: {
+                    "api_info_id":'@ViewData["api_id"]'
+                },
+                success: function (data) {
+                    if (data == "[]") {
+                        //没有参数
+                    } else { 
+                        var jsonObj = eval("(" + data + ")");
+                        var table = $("#param_table");
+                        for (var i = 0; i < jsonObj.length;i++) { 
+                            var tr = $("<tr></tr>");
+                            tr.attr({"class":"param_tr"}).appendTo(table);
+                            //逻辑
+                            var logic_td = $("<td></td>");
+                            logic_sel = $("<select></select>");
+                            logic_sel.attr({ "id": "sel_" + jsonObj[i]["params_name"] })
+                                .html("<option value='and'>and</option><option value='or'>or</option>")
+                                .appendTo(logic_td);
+                            logic_td.appendTo(tr);
+
+                            //参数名
+                            var name_td = $("<td></td>");
+                            name_td.attr({ "class":"pname"}).text(jsonObj[i]["params_name"])
+                                .appendTo(tr);
+
+                            //参数类型
+                            var type_td = $("<td></td>");
+                            type_td.attr({ "class": "ptype" }).text(jsonObj[i]["params_type"])
+                                .appendTo(tr);
+
+                            //操作符
+                            var operation_td = $("<td></td>");
+                            var operation_sel = $("<select></select>");
+                            operation_sel.attr({ "id": "opera_" + jsonObj[i]["params_name"]})
+                                .html("<option value='>'>></option><option value='<'><</option><option value='='>=</option><option value='!='>!=</option><option value='like'>like</option>");
+                            operation_sel.appendTo(operation_td);
+                            operation_td.appendTo(tr);
+
+                            //参数值
+                            var val_td = $("<td></td>");
+                            val_td.html("<input type='text' id='input_" + jsonObj[i]["params_name"] + "' val='' />");
+                            val_td.appendTo(tr);
+
+                            //描述
+                            var descr_td = $("<td></td>");
+                            descr_td.text(jsonObj[i]["params_descr"])
+                                .appendTo(tr);
+
+                        }
+                    }
+                }
+            });
+
+            $("#sel_api").click(function () { 
+                var param_tr = $(".param_tr");
+                var filter_str = "";
+                if (param_tr.length > 0) {
+                    filter_str = "[";
+                    for (var i = 0; i < param_tr.length; i++) {
+                        var filter_obj_str = "";
+                        var param_name = $(param_tr[i]).children().eq(1).text();
+                        var val_type = $(param_tr[i]).children().eq(2).text();
+                        var logic = $("#sel_" + param_name).val();
+                        var operation = $("#opera_" + param_name).val();
+                        var val = $("#input_" + param_name).val();
+                        if (i > 0) {
+                            if (val == "") {
+                                continue;
+                            }
+                            filter_obj_str = ",{\"ParamName\":\"" + param_name + "\",\"ValueType\":\"" + val_type + "\",\"Logic\":\"" + logic + "\",\"Operation\":\"" + operation + "\",\"Value\":\"" + val + "\"}";
+                        } else { 
+                            if (val == "") {
+                                continue;
+                            }
+                            filter_obj_str = "{\"ParamName\":\"" + param_name + "\",\"ValueType\":\"" + val_type + "\",\"Logic\":\"" + logic + "\",\"Operation\":\"" + operation + "\",\"Value\":\"" + val + "\"}";
+                        }
+                        filter_str += filter_obj_str;
+                    }
+                    filter_str += "]";
+                }
+                $.ajax({
+                    url: "/Index/TestApiGalaxy",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "apiCode": '@ViewData["api_code"]',
+                        "pCount": $("#pCount").val() == "" ? 1 : $("#pCount").val(),
+                        "pNum": $("#pNum").val() == "" ? 1 : $("#pNum").val(),
+                        "filter": filter_str
+                    },
+                    success: function (data) {
+                        $("#show_query").val(data);
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>
