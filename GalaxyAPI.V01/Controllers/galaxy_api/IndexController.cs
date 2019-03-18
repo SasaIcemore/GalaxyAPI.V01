@@ -1,4 +1,5 @@
 ﻿using GalaxyApi;
+using GalaxyApi.Model;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Net.Http;
 using Tools;
 using Tools.pgsql;
 using Tools.RSA;
@@ -107,17 +109,8 @@ namespace GalaxyAPI.V01.Models
         /// <returns></returns>
         public IActionResult GetApiList()
         {
-            //获取用户id和用户角色
-            int userId = manage.GetUserId(HttpContext.Session.GetString("userName"), HttpContext.Session.GetString("password"));
-            DataTable userTbl = manage.GetUserInfo(false, userId);
-            int role = 0;
-            if (userTbl != null)
-            {
-                if (userTbl.Rows.Count > 0)
-                {
-                    role = userTbl.Rows[0]["role_id"].ChkDBNullToInt();
-                }
-            }
+            //获取用户角色
+            int role = GetUserRole();
             //获取对应角色未禁用的api
             DataTable apiTbl = apiDataHelper.GetAPIList(role);
             string jsonStr = "";
@@ -128,10 +121,93 @@ namespace GalaxyAPI.V01.Models
             return Content(jsonStr);
         }
 
-        public IActionResult ApiInfo(string api_code)
+        public IActionResult SelApiList(string pcode, string pname, string pgroup)
         {
+            //获取用户角色
+            int role = GetUserRole();
+            //获取对应角色未禁用的api
+            DataTable apiTbl = apiDataHelper.SelAPIList(role, pcode, pname, pgroup);
+            string jsonStr = "";
+            if (apiTbl != null)
+            {
+                jsonStr = JsonConvert.SerializeObject(apiTbl);
+            }
+            return Content(jsonStr);
+        }
+
+        /// <summary>
+        /// 接口详情视图
+        /// </summary>
+        /// <param name="api_id"></param>
+        /// <param name="api_code"></param>
+        /// <returns></returns>
+        public IActionResult ApiInfo(string api_id, string api_code)
+        {
+            ViewData["api_id"] = api_id;
             ViewData["api_code"] = api_code;
             return View();
+        }
+
+        /// <summary>
+        /// 测试通用接口
+        /// </summary>
+        /// <param name="apiCode"></param>
+        /// <param name="pCount"></param>
+        /// <param name="pNum"></param>
+        /// <param name="filter"></param>
+        /// <returns></returns>
+        public IActionResult TestApiGalaxy(string apiCode, string pCount, string pNum, string filter)
+        {
+            IdentityServerResult idrs = null;
+            string token = string.Empty;
+            string apiResult = string.Empty;
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(MyConfig.ConfigManager.AUTHORITY);
+                var content = new FormUrlEncodedContent(new[] {
+                    new KeyValuePair<string, string>("client_id", "glxApi002"),
+                    new KeyValuePair<string, string>("password", HttpContext.Session.GetString("password")),
+                    new KeyValuePair<string, string>("grant_type", "password"),
+                    new KeyValuePair<string, string>("client_secret", "console.write"),
+                    new KeyValuePair<string, string>("userName", HttpContext.Session.GetString("userName"))
+                    });
+                var t = client.PostAsync("/connect/token", content);
+                t.Wait();
+                var result = t.Result;
+                var resultContent = result.Content.ReadAsStringAsync().Result;
+                idrs = JsonConvert.DeserializeObject<IdentityServerResult>(resultContent);
+                token = idrs.access_token;
+            }
+            using (HttpClient client = new HttpClient())
+            {
+                client.BaseAddress = new Uri(MyConfig.ConfigManager.LOCAL);
+                client.SetBearerToken(token);
+
+                var content1 = new FormUrlEncodedContent(new[] {
+                    new KeyValuePair<string, string>("apiCode", apiCode),
+                    new KeyValuePair<string, string>("pCount", pCount),
+                    new KeyValuePair<string, string>("pNum", pNum),
+                    new KeyValuePair<string, string>("filter",filter)
+                    });
+                var t1 = client.PostAsync("/api/galaxy", content1);
+                t1.Wait();
+                var result1 = t1.Result;
+                var resultContent1 = result1.Content.ReadAsStringAsync().Result;
+                apiResult = resultContent1;
+            }
+            return Content(apiResult);
+        }
+
+        /// <summary>
+        /// 获取api对应的参数
+        /// </summary>
+        /// <param name="api_info_id"></param>
+        /// <returns></returns>
+        public IActionResult GetApiParamsByApiId(int api_info_id)
+        {
+            DataTable tbl = apiDataHelper.GetApiParamsByApiId(api_info_id);
+            string jsonStr = JsonConvert.SerializeObject(tbl);
+            return Content(jsonStr);
         }
 
         /// <summary>
@@ -372,6 +448,22 @@ namespace GalaxyAPI.V01.Models
             }
             string jsonStr = JsonConvert.SerializeObject(tbl);
             return jsonStr;
+        }
+
+        private int GetUserRole()
+        {
+            //获取用户id和用户角色
+            int userId = manage.GetUserId(HttpContext.Session.GetString("userName"), HttpContext.Session.GetString("password"));
+            DataTable userTbl = manage.GetUserInfo(false, userId);
+            int role = 0;
+            if (userTbl != null)
+            {
+                if (userTbl.Rows.Count > 0)
+                {
+                    role = userTbl.Rows[0]["role_id"].ChkDBNullToInt();
+                }
+            }
+            return role;
         }
 
     }
