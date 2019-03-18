@@ -13,7 +13,7 @@ using System.Net.Http;
 
 namespace GalaxyAPI.V01.Controllers.galaxy_api
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [EnableCors("any")]
     public class GalaxyController : Controller
@@ -21,14 +21,13 @@ namespace GalaxyAPI.V01.Controllers.galaxy_api
         APIDataHelper dataHelper = new APIDataHelper();
         
         [HttpPost]
-        public IActionResult API(string apiCode, int pCount=1, int pNum=1)
+        public IActionResult API(string apiCode, string filter="", int pCount=1, int pNum=1)
         {
             //获取参数,json串
             List<APIParamsFilter> paralist = null;
             try
             {
-                string paramStr = HttpContext.Request.Form["filter"];
-                paralist = JsonConvert.DeserializeObject<List<APIParamsFilter>>(paramStr);
+                paralist = JsonConvert.DeserializeObject<List<APIParamsFilter>>(filter);
             }
             catch
             {
