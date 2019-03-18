@@ -288,7 +288,7 @@
                     }
                 });
             });
-
+            //保存api
             $("#save_api").click(function () { 
                 if (fields=="") { 
                     layer.msg("请选择字段");
@@ -296,11 +296,22 @@
                 }
                 var params_str = "";
                 var params = $(".params");
+                var param_arr = [];
                 params.each(function () {
-                    params_str = params_str + $(this).text()+",";
+                    param_arr.push($(this).text());
                 });
-                params_str = params_str.substring(0, params_str.length - 1);
-
+                for (var i = 0; i < param_arr.length; i++) {
+                    if (i > 0) {
+                        //参数名相同过滤
+                        if (param_arr[i] == param_arr[i - 1]) {
+                            continue;
+                        } else {
+                            params_str += "," + param_arr[i];
+                        }
+                    } else {
+                        params_str = params_str + param_arr[i];
+                    }
+                }
                 layer.open({
                     type: 2,
                     title: '保存API',
@@ -309,7 +320,6 @@
                     area: ['700px', '550px'],
                     content: '/Index/SaveGuidAPI?id_field=' + id_field + '&fields=' + fields + '&table_name=' + $("#tblNameList").val() + '&params_str=' + params_str
                 });
-
             });
         });
         function formatParamVal(operation, field, field_val) { 
