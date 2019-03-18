@@ -12,6 +12,7 @@ namespace MyConfig
         public static string TOKEN_URL = string.Empty;
         public static string AUTHORITY = string.Empty;
         public static string USER_INFO = string.Empty;
+        public static string LOCAL = string.Empty;
         //=============================================配置权限的数据库========================================
         public static string DbType = string.Empty;
         public static string HOST = string.Empty;
@@ -19,7 +20,7 @@ namespace MyConfig
         public static string PWD = string.Empty;
         public static string DB = string.Empty;
         public static Tools.pgsql.NpgsqlHelper dataHelper = null;
-
+        public static string strConn = string.Empty;
         //=============================================api数据库查询语句=======================================
         public const string sqlServerQuery = @"select * from ( 
                                                select ROW_NUMBER() over(order by {0})as rid,
@@ -59,7 +60,7 @@ namespace MyConfig
             TOKEN_URL = GetConfigVal("galaxy_token", "val");
             AUTHORITY = GetConfigVal("authority","val");
             USER_INFO = GetConfigVal("userinfo","val");
-
+            LOCAL = GetConfigVal("local","val");
             //=================================================微信公众号==========================================
             MP_IS_USE = GetConfigVal("wx_mp", "is_use"); 
 
@@ -87,6 +88,15 @@ namespace MyConfig
             DB = GetConfigVal("source", "Database");
 
             dataHelper = new Tools.pgsql.NpgsqlHelper(DbType, HOST, DB, UserName, PWD);
+            if (DbType == DB_TYPE_PGSQL)
+            {
+                strConn = string.Format("Host={0};UserName={1};Password={2};Database={3}", HOST, UserName, PWD, DB);
+            }
+            else
+            {
+                strConn = string.Format("Data Source={0};Initial Catalog={1};User ID={2};Password={3}", HOST, DB, UserName, PWD);
+            }
+            
             //=================================================企业微信=============================================
             //是否启用
             WK_IS_USE = GetConfigVal("wx_work", "is_use"); 
