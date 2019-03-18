@@ -12,8 +12,36 @@
 </head>
 <body>
     <div class="container" style="width:98%">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">代码：</span>
+                        <input type="text" class="form-control" id="pcode" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">名称：</span>
+                        <input type="text" class="form-control" id="pname" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">分组：</span>
+                        <input type="text" class="form-control" id="pgroup" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="btn btn-info" id="sel_api_list">查询</div>
+        </div>
         <table class="table table-striped" id="api_list_table">
             <tr>
+                <th>ID</th>
                 <th>代码</th>
                 <th>名称</th>
                 <th>分组</th>
@@ -32,8 +60,31 @@
                 cache: false,
                 success: function (data) {
                     var table = $("#api_list_table");
+                    if ($(".api_tr").length > 0) {
+                        $(".api_tr").remove();
+                    }
                     getDataTbl(data, table);
                 }
+            });
+
+            $("#sel_api_list").click(function () {
+                $.ajax({
+                    url: "/Index/SelApiList",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "pcode": $("#pcode").val(),
+                        "pname": $("#pname").val(),
+                        "pgroup": $("#pgroup").val()
+                    },
+                    success: function (data) { 
+                        var table = $("#api_list_table");
+                        if ($(".api_tr").length > 0) {
+                            $(".api_tr").remove();
+                        }
+                        getDataTbl(data, table);
+                    }
+                });
             });
         });
         function getDataTbl(jsonStr, table) { 
@@ -41,7 +92,10 @@
             if (jsonObj != null) {
                 for (var i = 0; i < jsonObj.length;i++) { 
                     var tr = $("<tr></tr>");
-                    tr.appendTo(table);
+                    tr.attr({"class":"api_tr"}).appendTo(table);
+
+                    var api_id = $("<td></td>");
+                    api_id.text(jsonObj[i]["id"]).appendTo(tr);
 
                     var api_code = $("<td></td>");
                     api_code.text(jsonObj[i]["api_code"]).appendTo(tr);
@@ -57,21 +111,22 @@
 
                     var btn_td = $("<td></td>");
                     var btn_div = $("<div></div>");
-                    btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["api_code"] }).text("详情").appendTo(tr);
+                    btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["id"], "api_code": jsonObj[i]["api_code"]}).text("详情").appendTo(tr);
                     btn_div.click(function () { 
-                        cli_api_info($(this).attr("id"));
+                        cli_api_info($(this).attr("id"),$(this).attr("api_code"));
                     });
                 }
              }
         }
 
-        function cli_api_info(api_code) { 
-            //alert(api_code);
+        //api详情页
+        function cli_api_info(api_id, api_code) { 
             $.ajax({
                 url: "/Index/ApiInfo",
                 type: "post",
                 cache: false,
                 data: {
+                    "api_id": api_id,
                     "api_code": api_code
                 },
                 success: function (data) {
