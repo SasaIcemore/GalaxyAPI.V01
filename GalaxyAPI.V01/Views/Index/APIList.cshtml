@@ -52,12 +52,25 @@
     </div>
     <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript">
-        $(function () { 
+        $(function () {
             //生成api列表
+            getList($("#pcode").val(), $("#pname").val(), $("#pgroup").val());
+
+            $("#sel_api_list").click(function () {
+                getList($("#pcode").val(), $("#pname").val(), $("#pgroup").val());
+            });
+        });
+
+        function getList(pcode, pname, pgroup) {
             $.ajax({
-                url: "/Index/GetApiList",
+                url: "/Index/SelApiList",
                 type: "post",
                 cache: false,
+                data: {
+                    "pcode": pcode,
+                    "pname": pname,
+                    "pgroup": pgroup
+                },
                 success: function (data) {
                     var table = $("#api_list_table");
                     if ($(".api_tr").length > 0) {
@@ -66,27 +79,7 @@
                     getDataTbl(data, table);
                 }
             });
-
-            $("#sel_api_list").click(function () {
-                $.ajax({
-                    url: "/Index/SelApiList",
-                    type: "post",
-                    cache: false,
-                    data: {
-                        "pcode": $("#pcode").val(),
-                        "pname": $("#pname").val(),
-                        "pgroup": $("#pgroup").val()
-                    },
-                    success: function (data) { 
-                        var table = $("#api_list_table");
-                        if ($(".api_tr").length > 0) {
-                            $(".api_tr").remove();
-                        }
-                        getDataTbl(data, table);
-                    }
-                });
-            });
-        });
+        }
         function getDataTbl(jsonStr, table) { 
             var jsonObj = eval("(" + jsonStr + ")");
             if (jsonObj != null) {
@@ -119,19 +112,19 @@
              }
         }
 
-        //api详情页
+        //api属性页
         function cli_api_info(api_id, api_code) { 
             $.ajax({
-                url: "/Index/ApiInfo",
-                type: "post",
-                cache: false,
-                data: {
-                    "api_id": api_id,
-                    "api_code": api_code
-                },
-                success: function (data) {
-                    $("#content_body").html(data);
-                }
+                //url: "/Index/ApiInfo",
+                //type: "post",
+                //cache: false,
+                //data: {
+                //    "api_id": api_id,
+                //    "api_code": api_code
+                //},
+                //success: function (data) {
+                //    $("#content_body").html(data);
+                //}
             });
         }
     </script>
