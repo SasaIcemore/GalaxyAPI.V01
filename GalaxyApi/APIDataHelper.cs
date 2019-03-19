@@ -505,26 +505,52 @@ namespace GalaxyApi
             return val;
         }
 
+     
         /// <summary>
-        /// 获取api列表
+        /// 根据条件查询api
         /// </summary>
-        /// <param name="role_id"></param>
+        /// <param name="role_id">角色id</param>
+        /// <param name="pcode">api代码</param>
+        /// <param name="pname">api名称</param>
+        /// <param name="pgroup">api分组</param>
         /// <returns></returns>
-        public DataTable GetAPIList(int role_id)
+        public DataTable SelAPIList(int role_id,string pcode,string pname,string pgroup)
         {
+            //未完善
             sql = @"select a.id,a.api_code,api_name,a.descr,group_name from public.api_info a
                     left join public.api_role b on a.id=b.api_id
                     left join public.api_group c on a.apigroup_id = c.id
                     where a.is_del=false and b.is_del=false and role_id=@role_id";
+            if (!string.IsNullOrEmpty(pcode))
+            {
+                sql += " and a.api_code like @pcode";
+            }
+            else
+            {
+                pcode = "";
+            }
+            if (!string.IsNullOrEmpty(pname))
+            {
+                sql += " and api_name like @pname";
+            }
+            else
+            {
+                pname = "";
+            }
+            if (!string.IsNullOrEmpty(pgroup))
+            {
+                sql += " and group_name like @pgroup";
+            }
+            else
+            {
+                pgroup = "";
+            }
             NpgsqlParameter ridParam = new NpgsqlParameter("@role_id", role_id);
-            DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql,ridParam);
+            NpgsqlParameter codeParam = new NpgsqlParameter("@pcode", "%"+ pcode + "%");
+            NpgsqlParameter nameParam = new NpgsqlParameter("@pname", "%" + pname + "%");
+            NpgsqlParameter groupParam = new NpgsqlParameter("@pgroup", "%" + pgroup + "%");
+            DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql, ridParam, codeParam, nameParam, groupParam);
             return tbl;
-        }
-         
-        public DataTable SelAPIList(int role_id,string pcode,string pname,string pgroup)
-        {
-            //未完善
-            return null;
         }
 
         /// <summary>
