@@ -112,7 +112,7 @@ namespace GalaxyAPI.V01.Models
             //获取用户角色
             int role = GetUserRole();
             //获取对应角色未禁用的api
-            DataTable apiTbl = apiDataHelper.GetAPIList(role);
+            DataTable apiTbl = apiDataHelper.SelAPIList(role, null, null, null);
             string jsonStr = "";
             if (apiTbl != null)
             {
@@ -145,6 +145,15 @@ namespace GalaxyAPI.V01.Models
         {
             ViewData["api_id"] = api_id;
             ViewData["api_code"] = api_code;
+            return View();
+        }
+
+        /// <summary>
+        /// api属性视图
+        /// </summary>
+        /// <returns></returns>
+        public IActionResult ApiProp()
+        {
             return View();
         }
 
