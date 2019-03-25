@@ -173,7 +173,7 @@ namespace GalaxyApi
                                 {
                                     foreach (int i in api_roles)
                                     {
-                                        sql = string.Format(@"insert into public.api_role(api_id, role_id, create_tm, is_del) values({0},{1},now(),false)", api_info_id, i);
+                                        sql = string.Format(@"insert into public.api_role(api_id, role_id, create_tm, create_user) values({0},{1},now(),'{2}')", api_info_id, i, create_user);
                                         command.CommandText = sql;
                                         try
                                         {
@@ -516,11 +516,11 @@ namespace GalaxyApi
         /// <returns></returns>
         public DataTable SelAPIList(int role_id,string pcode,string pname,string pgroup)
         {
-            //未完善
-            sql = @"select a.id,a.api_code,api_name,a.descr,group_name from public.api_info a
+            sql = @"select a.id,a.api_code,api_name,a.descr,c.id as group_id,group_name,a.is_del as is_api_del 
+                    from public.api_info a
                     left join public.api_role b on a.id=b.api_id
                     left join public.api_group c on a.apigroup_id = c.id
-                    where a.is_del=false and b.is_del=false and role_id=@role_id";
+                    where role_id=@role_id ";
             if (!string.IsNullOrEmpty(pcode))
             {
                 sql += " and a.api_code like @pcode";
@@ -545,6 +545,7 @@ namespace GalaxyApi
             {
                 pgroup = "";
             }
+            sql += " order by a.id desc";
             NpgsqlParameter ridParam = new NpgsqlParameter("@role_id", role_id);
             NpgsqlParameter codeParam = new NpgsqlParameter("@pcode", "%"+ pcode + "%");
             NpgsqlParameter nameParam = new NpgsqlParameter("@pname", "%" + pname + "%");
@@ -564,6 +565,162 @@ namespace GalaxyApi
             NpgsqlParameter idParam = new NpgsqlParameter("@api_id", api_id);
             DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql, idParam);
             return tbl;
+        }
+
+        public DataTable GetApiRoles(int api_id)
+        {
+            string sql = @"select * from public.api_role where api_id=@api_id";
+            NpgsqlParameter idParam = new NpgsqlParameter("@api_id", api_id);
+            DataTable tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(sql, idParam);
+            return tbl;
+        }
+
+        /// <summary>
+        /// 修改api属性和所属角色
+        /// </summary>
+        /// <param name="api_id"></param>
+        /// <param name="is_del"></param>
+        /// <param name="group_id"></param>
+        /// <param name="roles"></param>
+        /// <param name="create_user"></param>
+        /// <returns></returns>
+        public int EditApi(int api_id, bool is_del, int group_id, int[] roles, string create_user,int user_role_id)
+        {
+            using (NpgsqlConnection connection = new NpgsqlConnection(MyConfig.ConfigManager.strConn))
+            {
+                connection.Open();
+                using (NpgsqlTransaction transaction = connection.BeginTransaction())
+                {
+                    using (NpgsqlCommand command = connection.CreateCommand())
+                    {
+                        command.Transaction = transaction;  //为命令指定事务
+                        bool flag = false;//执行成功的标记
+                        try
+                        {
+                            #region 修改public.api_info
+                            string update_api_info = string.Format(@"update public.api_info set is_del=@is_del,apigroup_id=@group_id where id=@api_id");
+                            NpgsqlParameter delParam = new NpgsqlParameter("@is_del", is_del);
+                            NpgsqlParameter gidParam = new NpgsqlParameter("@group_id", group_id);
+                            NpgsqlParameter idParam = new NpgsqlParameter("@api_id", api_id);
+                            command.Parameters.Add(delParam);
+                            command.Parameters.Add(gidParam);
+                            command.Parameters.Add(idParam);
+                            command.CommandText = update_api_info;
+                            #endregion
+                            int api_info_rs = command.ExecuteNonQuery();
+                            //修改public.api_info 执行成功
+                            if (api_info_rs > 0)
+                            {
+                                flag = true;
+                                if (roles.Length > 0)
+                                {
+                                    //修改public.api_role
+                                    string api_role_sql = @"select * from public.api_role where api_id=@api_id";
+                                    NpgsqlParameter apiIdParam = new NpgsqlParameter("@api_id", api_id);
+                                    DataTable api_role_tbl = MyConfig.ConfigManager.dataHelper.GetDataTbl(api_role_sql, apiIdParam);
+                                    if (api_role_tbl != null)
+                                    {
+                                        if (api_role_tbl.Rows.Count > 0)
+                                        {
+                                            bool exist = true;//表里是否存在要配置的角色
+                                            List<int> delRoleList = new List<int>();//表里原有的，但现在需要删除的角色
+                                            List<int> tblApiRoleList = new List<int>();//记录表里的角色
+                                            for (int i = 0; i < roles.Length; i++)
+                                            {
+                                                //判断角色在表里有无记录
+                                                foreach (DataRow dr in api_role_tbl.Rows)
+                                                {
+                                                    int tblRoleId = dr["role_id"].ChkDBNullToInt();
+                                                    //已存在
+                                                    if (roles[i] == tblRoleId)
+                                                    {
+                                                        exist = true;
+                                                        break;
+                                                    }
+                                                    else
+                                                    {
+                                                        exist = false;
+                                                    }
+                                                }
+                                                //添加授权增加的角色
+                                                if (exist == false)
+                                                {
+                                                    string add_role_sql = string.Format(@"insert into public.api_role (api_id, role_id, create_tm, create_user) 
+                                                                                values ({0},{1},now(),'{2}')", api_id, roles[i], create_user);
+                                                    command.CommandText = add_role_sql;
+                                                    int add_role_rs = command.ExecuteNonQuery();
+                                                    if (add_role_rs > 0)
+                                                    {
+                                                        flag = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        flag = false;
+                                                        transaction.Rollback();
+                                                    }
+                                                }
+                                            }
+                                            foreach (DataRow dr in api_role_tbl.Rows)
+                                            {
+                                                int tblRoleId = dr["role_id"].ChkDBNullToInt();
+                                                tblApiRoleList.Add(tblRoleId);
+                                            }
+                                            List<int> rolesList = new List<int>(roles);
+                                            foreach (int delRole in tblApiRoleList)
+                                            {
+                                                if (!rolesList.Contains(delRole))
+                                                {
+                                                    delRoleList.Add(delRole);
+                                                }
+                                            }
+                                            //需要删除的角色id
+                                            if (delRoleList.Count > 0)
+                                            {
+                                                foreach (int role_id in delRoleList)
+                                                {
+                                                    if (role_id == user_role_id)
+                                                    {
+                                                        //不能删除自己所属的api
+                                                        continue;
+                                                    }
+                                                    string del_role_sql = string.Format(@"delete from public.api_role where api_id={0} and role_id={1}", api_id, role_id);
+                                                    command.CommandText = del_role_sql;
+                                                    int del_role_rs = command.ExecuteNonQuery();
+                                                    if (del_role_rs > 0)
+                                                    {
+                                                        flag = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        flag = false;
+                                                        transaction.Rollback();
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            transaction.Rollback();
+                            throw e;
+                        }
+                        //标记值为true，没有执行错误
+                        if (flag)
+                        {
+                            transaction.Commit();
+                            return 1;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return 0;
+                        }
+                    }
+                }
+            }
         }
     }
 }
