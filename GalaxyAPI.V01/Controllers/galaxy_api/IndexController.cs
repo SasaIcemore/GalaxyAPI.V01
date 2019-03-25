@@ -141,15 +141,22 @@ namespace GalaxyAPI.V01.Models
         /// <param name="api_id"></param>
         /// <param name="api_code"></param>
         /// <returns></returns>
-        public IActionResult ApiInfo(string api_id, string api_code)
+        public IActionResult ApiInfo(string api_id, string api_code, bool is_del)
         {
-            ViewData["api_id"] = api_id;
-            ViewData["api_code"] = api_code;
-            return View();
+            if (is_del)
+            {
+                return Content("您没有权限，请联系管理员");
+            }
+            else
+            {
+                ViewData["api_id"] = api_id;
+                ViewData["api_code"] = api_code;
+                return View();
+            }
         }
 
         /// <summary>
-        /// api属性视图
+        /// api列表属性视图
         /// </summary>
         /// <returns></returns>
         public IActionResult ApiProp()
@@ -157,6 +164,35 @@ namespace GalaxyAPI.V01.Models
             return View();
         }
 
+        public IActionResult ApiPropView(int api_id, string api_code, string api_name, bool is_del, int group_id)
+        {
+            ViewData["api_id"] = api_id;
+            ViewData["api_code"] = api_code;
+            ViewData["group_id"] = group_id;
+            ViewData["api_name"] = api_name;
+            ViewData["is_del"] = is_del;
+            return View();
+        }
+
+        public IActionResult GetApiRoles(int api_id)
+        {
+            DataTable tbl = apiDataHelper.GetApiRoles(api_id);
+            string jsonStr = JsonConvert.SerializeObject(tbl);
+            return Content(jsonStr);
+        }
+
+        public IActionResult EditApi(int api_id, bool is_del,int group_id,int[] roles)
+        {
+            int userId = manage.GetUserId(HttpContext.Session.GetString("userName"), HttpContext.Session.GetString("password"));
+            DataTable tbl = manage.GetUserInfo(false, userId);
+            int role_id = -1;
+            if (tbl!=null)
+            {
+                role_id = tbl.Rows[0]["role_id"].ChkDBNullToInt();
+            }
+            int rs = apiDataHelper.EditApi(api_id,is_del,group_id,roles, HttpContext.Session.GetString("userName"), role_id);
+            return Content(rs.ChkNonQuery());
+        }
         /// <summary>
         /// 测试通用接口
         /// </summary>
