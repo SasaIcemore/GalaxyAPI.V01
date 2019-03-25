@@ -24,32 +24,34 @@
 <script type="text/javascript" src="~/js/sha1.js"></script>
 <script type="text/javascript">
     $(function () {
-        $("#login_btn").click(function () {
-            var name = $("#userName").val();
-            var pwd = $("#password").val();
-            if (name == "" || pwd == "") {
-                alert("用户名或密码不能为空");
-                return false;
-            } else {
-                pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
-                $("#password").val(pwd)
-                $.ajax({
-                    url: "/login/ChkLogin",
-                    type: "post",
-                    cache: false,
-                    data: {
-                        "userName": name,
-                        "password":pwd
-                    },
-                    success: function (data) { 
-                        if (data) {
-                            window.location = "/Manage/Index";
-                        } else {
-                            window.location = "/Login/Login";
-                        }
-                    }
-                });
-            }
-        });
+        $("#login_btn").click(login);
     });
+
+    function login() {
+        var name = $("#userName").val();
+        var pwd = $("#password").val();
+        if (name == "" || pwd == "") {
+            alert("用户名或密码不能为空");
+            return false;
+        } else {
+            pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+            $("#password").val(pwd)
+            $.ajax({
+                url: "/login/ChkLogin",
+                type: "post",
+                cache: false,
+                data: {
+                    "userName": name,
+                    "password": pwd
+                },
+                success: function (data) {
+                    if (data) {
+                        window.location = "/Manage/Index";
+                    } else {
+                        window.location = "/Login/Login";
+                    }
+                }
+            });
+        }
+    }
 </script>

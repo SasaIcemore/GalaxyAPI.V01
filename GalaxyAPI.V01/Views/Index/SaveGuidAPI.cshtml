@@ -10,14 +10,15 @@
     <meta name="viewport" content="width=device-width" />
     <title>SaveGuidAPI</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/css/bootstrap-select.min.css" />
     <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/css/bootstrap-select.min.css" />
     <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/js/bootstrap-select.min.js"></script>
     <script type="text/javascript" src="~/layer/layer.js"></script>
-    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/js/i18n/defaults-zh_CN.js"></script>
     <script type="text/javascript" src="~/js/Global.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/js/i18n/defaults-zh_CN.js"></script>
+    <script type="text/javascript" src="~/js/Index/index.js"></script>
 </head>
 <body>
     <div class="container">
@@ -64,39 +65,9 @@
     <script type="text/javascript">
         $(function () {
             //初始化分组下拉框
-            $.ajax({
-                url: "/manage/GetRoles",
-                type: "post",
-                cache: false,
-                data: { "all_role": false },
-                success: function (data) {
-                    var jsonObj = eval("(" + data + ")");
-                    var sel_roles = $("#sel_roles");
-                    for (var i = 0; i < jsonObj.length; i++) {
-                        var option = $("<option></option>");
-                        option.val(jsonObj[i]["id"]).text(jsonObj[i]["role_name"]).appendTo(sel_roles);
-                    }
-                    $('#sel_roles').selectpicker('refresh');//刷新
-                }
-            });
+            getSelGroups($("#sel_api_group"),0);
             //初始化角色下拉框
-            $.ajax({
-                url: "/index/GetAPIGroup",
-                type: "post",
-                cache: false,
-                data: {
-                    "all": false,
-                },
-                success: function (data) {
-                    var jsonObj = eval("(" + data + ")");
-                    var sel_api_group = $("#sel_api_group");
-                    for (var i = 0; i < jsonObj.length; i++) {
-                        var option = $("<option></option>");
-                        option.val(jsonObj[i]["id"]).text(jsonObj[i]["group_name"]).appendTo(sel_api_group);
-                    }
-                    $('#sel_api_group').selectpicker('refresh');//刷新
-                }
-            });
+            getSelRoles($("#sel_roles"));
 
             Request = GetRequest();
             var id_field = Request["id_field"];
@@ -106,23 +77,24 @@
             var params_arr = params_str.split(',');
             //console.log(params_arr);
             var table = $("table");
-            for (var i = 0; i < params_arr.length;i++) { 
-                var tr = $("<tr></tr>");
-                tr.appendTo(table);
-                //参数名称
-                var name_td = $("<td></td>");
-                name_td.text(params_arr[i]).appendTo(tr);
-                //参数类型
-                var type_td = $("<td></td>");
-                var type_sel = $("<select class='sel_param_type' id='sel_" + params_arr[i] +"'></select>");
-                type_sel.html("<option value='string'>string</option><option value='int'>int</option><option value='double'>double</option><option value='bool'>bool</option>");
-                type_sel.appendTo(type_td);
-                type_td.appendTo(tr);
-                //描述
-                var descr_td = $("<td></td>");
-                descr_td.html("<input type='text' class='param_descr' id='param_descr_" + params_arr[i] + "' val='' size='30' AUTOCOMPLETE='off'/>").appendTo(tr);
+            if (params_str!="") { 
+                for (var i = 0; i < params_arr.length; i++) {
+                    var tr = $("<tr></tr>");
+                    tr.appendTo(table);
+                    //参数名称
+                    var name_td = $("<td></td>");
+                    name_td.text(params_arr[i]).appendTo(tr);
+                    //参数类型
+                    var type_td = $("<td></td>");
+                    var type_sel = $("<select class='sel_param_type' id='sel_" + params_arr[i] + "'></select>");
+                    type_sel.html("<option value='string'>string</option><option value='int'>int</option><option value='double'>double</option><option value='bool'>bool</option>");
+                    type_sel.appendTo(type_td);
+                    type_td.appendTo(tr);
+                    //描述
+                    var descr_td = $("<td></td>");
+                    descr_td.html("<input type='text' class='param_descr' id='param_descr_" + params_arr[i] + "' val='' size='30' AUTOCOMPLETE='off'/>").appendTo(tr);
+                }
             }
-
 
             //添加api分组
             $(".add_api_group").click(function () {
@@ -136,6 +108,7 @@
                 });
             });
 
+            //保存api
             $("#save_api").click(function () { 
                 var api_code = $("#api_code").val();
                 if (api_code == "") {

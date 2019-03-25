@@ -46,6 +46,7 @@
                 <th>名称</th>
                 <th>分组</th>
                 <th>描述</th>
+                <th>状态</th>
                 <th>详情</th>
             </tr>
         </table>
@@ -103,25 +104,45 @@
                     var api_descr = $("<td></td>");
                     api_descr.text(jsonObj[i]["descr"]).appendTo(tr);
 
+                    var api_status = $("<td></td>");
+                    var status = jsonObj[i]["is_api_del"] == false ? "启用" : "<font color='red'>删除</font>";
+                    api_status.html(status).appendTo(tr);
+
                     var btn_td = $("<td></td>");
                     var btn_div = $("<div></div>");
-                    btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["id"], "api_code": jsonObj[i]["api_code"]}).text("详情").appendTo(tr);
+                    btn_div.attr({
+                        "class": "btn btn-info btn-sm",
+                        "id": jsonObj[i]["id"],
+                        "group_id": jsonObj[i]["group_id"],
+                        "api_name": jsonObj[i]["api_name"],
+                        "api_code": jsonObj[i]["api_code"],
+                        "is_del": jsonObj[i]["is_api_del"]
+                    }).text("详情").appendTo(tr);
                     btn_div.click(function () {
-                        cli_api_info($(this).attr("id"),$(this).attr("api_code"));
+                        cli_api_prop(
+                            $(this).attr("id"),
+                            $(this).attr("api_code"),
+                            $(this).attr("api_name"),
+                            $(this).attr("is_del"),
+                            $(this).attr("group_id")
+                        );
                     });
                 }
              }
         }
 
         //api详情页
-        function cli_api_info(api_id, api_code) {
+        function cli_api_prop(api_id, api_code, api_name, is_del, group_id) {
             $.ajax({
-                url: "/Index/ApiInfo",
+                url: "/Index/ApiPropView",
                 type: "post",
                 cache: false,
                 data: {
                     "api_id": api_id,
-                    "api_code": api_code
+                    "api_code": api_code,
+                    "api_name": api_name,
+                    "is_del": is_del,
+                    "group_id": group_id
                 },
                 success: function (data) {
                     $("#content_body").html(data);

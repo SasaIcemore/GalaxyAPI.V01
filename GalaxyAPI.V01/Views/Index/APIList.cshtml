@@ -83,50 +83,54 @@
         function getDataTbl(jsonStr, table) { 
             var jsonObj = eval("(" + jsonStr + ")");
             if (jsonObj != null) {
-                for (var i = 0; i < jsonObj.length;i++) { 
-                    var tr = $("<tr></tr>");
-                    tr.attr({"class":"api_tr"}).appendTo(table);
+                for (var i = 0; i < jsonObj.length; i++) { 
+                    if (jsonObj[i]["is_api_del"]==false) { 
+                        var tr = $("<tr></tr>");
+                        tr.attr({ "class": "api_tr" }).appendTo(table);
 
-                    var api_id = $("<td></td>");
-                    api_id.text(jsonObj[i]["id"]).appendTo(tr);
+                        var api_id = $("<td></td>");
+                        api_id.text(jsonObj[i]["id"]).appendTo(tr);
 
-                    var api_code = $("<td></td>");
-                    api_code.text(jsonObj[i]["api_code"]).appendTo(tr);
+                        var api_code = $("<td></td>");
+                        api_code.text(jsonObj[i]["api_code"]).appendTo(tr);
 
-                    var api_name = $("<td></td>");
-                    api_name.text(jsonObj[i]["api_name"]).appendTo(tr);
+                        var api_name = $("<td></td>");
+                        api_name.text(jsonObj[i]["api_name"]).appendTo(tr);
 
-                    var api_group = $("<td></td>");
-                    api_group.text(jsonObj[i]["group_name"]).appendTo(tr);
+                        var api_group = $("<td></td>");
+                        api_group.text(jsonObj[i]["group_name"]).appendTo(tr);
 
-                    var api_descr = $("<td></td>");
-                    api_descr.text(jsonObj[i]["descr"]).appendTo(tr);
+                        var api_descr = $("<td></td>");
+                        api_descr.text(jsonObj[i]["descr"]).appendTo(tr);
 
-                    var btn_td = $("<td></td>");
-                    var btn_div = $("<div></div>");
-                    btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["id"], "api_code": jsonObj[i]["api_code"]}).text("详情").appendTo(tr);
-                    btn_div.click(function () { 
-                        cli_api_info($(this).attr("id"),$(this).attr("api_code"));
-                    });
+                        var btn_td = $("<td></td>");
+                        var btn_div = $("<div></div>");
+                        btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["id"], "api_code": jsonObj[i]["api_code"], "is_del": jsonObj[i]["is_api_del"] }).text("详情").appendTo(tr);
+                        btn_div.click(function () {
+                            cli_api_info($(this).attr("id"), $(this).attr("api_code"), $(this).attr("is_del"));
+                        });
+                    }
                 }
              }
         }
 
         //api属性页
-        function cli_api_info(api_id, api_code) { 
+        function cli_api_info(api_id, api_code, is_del) { 
             $.ajax({
-                //url: "/Index/ApiInfo",
-                //type: "post",
-                //cache: false,
-                //data: {
-                //    "api_id": api_id,
-                //    "api_code": api_code
-                //},
-                //success: function (data) {
-                //    $("#content_body").html(data);
-                //}
+                url: "/Index/ApiInfo",
+                type: "post",
+                cache: false,
+                data: {
+                    "api_id": api_id,
+                    "api_code": api_code,
+                    "is_del": is_del
+                },
+                success: function (data) {
+                    $("#content_body").html(data);
+                }
             });
         }
+      
     </script>
 </body>
 </html>
