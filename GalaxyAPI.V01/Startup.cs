@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using WeiXinAccessToken;
 
 namespace GalaxyAPI.V01
@@ -48,6 +50,7 @@ namespace GalaxyAPI.V01
                     c.ApiName = "api";
                 });
             services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService, AccessTokenJob>();
+            services.AddSingleton(HtmlEncoder.Create(UnicodeRanges.All));
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
         }
 
