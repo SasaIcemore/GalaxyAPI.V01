@@ -576,13 +576,14 @@ namespace GalaxyApi
         }
 
         /// <summary>
-        /// 修改api属性和所属角色
+        /// 修改api属性和角色
         /// </summary>
         /// <param name="api_id"></param>
-        /// <param name="is_del"></param>
-        /// <param name="group_id"></param>
-        /// <param name="roles"></param>
-        /// <param name="create_user"></param>
+        /// <param name="is_del">是否删除</param>
+        /// <param name="group_id">分组</param>
+        /// <param name="roles">客户端发送过来的可调用的角色数组</param>
+        /// <param name="create_user">修改人</param>
+        /// <param name="user_role_id">修改人id</param>
         /// <returns></returns>
         public int EditApi(int api_id, bool is_del, int group_id, int[] roles, string create_user,int user_role_id)
         {
@@ -593,7 +594,7 @@ namespace GalaxyApi
                 {
                     using (NpgsqlCommand command = connection.CreateCommand())
                     {
-                        command.Transaction = transaction;  //为命令指定事务
+                        command.Transaction = transaction;  //事务
                         bool flag = false;//执行成功的标记
                         try
                         {
@@ -622,31 +623,36 @@ namespace GalaxyApi
                                     {
                                         if (api_role_tbl.Rows.Count > 0)
                                         {
-                                            bool exist = true;//表里是否存在要配置的角色
-                                            List<int> delRoleList = new List<int>();//表里原有的，但现在需要删除的角色
                                             List<int> tblApiRoleList = new List<int>();//记录表里的角色
-                                            for (int i = 0; i < roles.Length; i++)
+                                            List<int> rolesList = new List<int>(roles);//将传过来的角色数组转list
+                                            List<int> delRoleList = new List<int>();//表里原有的，但传过来的角色数组中没有的部分，即需要删除的角色
+                                            List<int> addRoleList = new List<int>();//传过来的角色id中不属于表中的id，即需要增加的角色id
+                                            foreach (DataRow dr in api_role_tbl.Rows)
                                             {
-                                                //判断角色在表里有无记录
-                                                foreach (DataRow dr in api_role_tbl.Rows)
+                                                int tblRoleId = dr["role_id"].ChkDBNullToInt();
+                                                tblApiRoleList.Add(tblRoleId);
+                                            }
+                                            foreach (int delRole in tblApiRoleList)
+                                            {
+                                                if (!rolesList.Contains(delRole))
                                                 {
-                                                    int tblRoleId = dr["role_id"].ChkDBNullToInt();
-                                                    //已存在
-                                                    if (roles[i] == tblRoleId)
-                                                    {
-                                                        exist = true;
-                                                        break;
-                                                    }
-                                                    else
-                                                    {
-                                                        exist = false;
-                                                    }
+                                                    delRoleList.Add(delRole);
                                                 }
-                                                //添加授权增加的角色
-                                                if (exist == false)
+                                            }
+                                            foreach (int addRole in rolesList)
+                                            {
+                                                if (!tblApiRoleList.Contains(addRole))
+                                                {
+                                                    addRoleList.Add(addRole);
+                                                }
+                                            }
+                                            //需要增加的角色
+                                            if (addRoleList.Count>0)
+                                            {
+                                                foreach (int role_id in addRoleList)
                                                 {
                                                     string add_role_sql = string.Format(@"insert into public.api_role (api_id, role_id, create_tm, create_user) 
-                                                                                values ({0},{1},now(),'{2}')", api_id, roles[i], create_user);
+                                                                                        values ({0},{1},now(),'{2}')", api_id, role_id, create_user);
                                                     command.CommandText = add_role_sql;
                                                     int add_role_rs = command.ExecuteNonQuery();
                                                     if (add_role_rs > 0)
@@ -660,20 +666,7 @@ namespace GalaxyApi
                                                     }
                                                 }
                                             }
-                                            foreach (DataRow dr in api_role_tbl.Rows)
-                                            {
-                                                int tblRoleId = dr["role_id"].ChkDBNullToInt();
-                                                tblApiRoleList.Add(tblRoleId);
-                                            }
-                                            List<int> rolesList = new List<int>(roles);
-                                            foreach (int delRole in tblApiRoleList)
-                                            {
-                                                if (!rolesList.Contains(delRole))
-                                                {
-                                                    delRoleList.Add(delRole);
-                                                }
-                                            }
-                                            //需要删除的角色id
+                                            //需要删除的角色
                                             if (delRoleList.Count > 0)
                                             {
                                                 foreach (int role_id in delRoleList)
