@@ -626,7 +626,7 @@ namespace GalaxyApi
                                             List<int> tblApiRoleList = new List<int>();//记录表里的角色
                                             List<int> rolesList = new List<int>(roles);//将传过来的角色数组转list
                                             List<int> delRoleList = new List<int>();//表里原有的，但传过来的角色数组中没有的部分，即需要删除的角色
-                                            List<int> addRoleList = new List<int>();//传过来的角色id中不属于表中的id，即需要增加的角色id
+                                            List<int> addRoleList = new List<int>();//传过来的角色id中不属于表中的id，即需要增加的角色
                                             foreach (DataRow dr in api_role_tbl.Rows)
                                             {
                                                 int tblRoleId = dr["role_id"].ChkDBNullToInt();
