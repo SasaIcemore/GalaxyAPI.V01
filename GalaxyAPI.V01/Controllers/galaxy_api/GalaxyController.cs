@@ -35,18 +35,9 @@ namespace GalaxyAPI.V01.Controllers.galaxy_api
             }
             //获取令牌，取得角色id
             string auth = HttpContext.Request.Headers["Authorization"];
-            int role_id = 0;
-            using (HttpClient client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(MyConfig.ConfigManager.AUTHORITY);
-                client.DefaultRequestHeaders.Add("Authorization", auth);
-                var t = client.GetAsync("/connect/userinfo");
-                t.Wait();
-                var result = t.Result;
-                var resultContent = result.Content.ReadAsStringAsync().Result;
-                ConnectUserInfo userInfo = JsonConvert.DeserializeObject<ConnectUserInfo>(resultContent);
-                role_id = userInfo == null ? 0 : userInfo.role;
-            }
+            IdServerUserInfo idsUserInfo = new IdServerUserInfo(auth);
+            ConnectUserInfo userInfo = idsUserInfo.GetConnectUserInfo();
+            int role_id = userInfo == null ? 0 : userInfo.role;
             //是否有权调用api
             bool canUse = dataHelper.IsGetApi(role_id, apiCode);
             if (canUse)
