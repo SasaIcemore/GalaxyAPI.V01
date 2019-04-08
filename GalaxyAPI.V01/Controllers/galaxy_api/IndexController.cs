@@ -58,7 +58,7 @@ namespace GalaxyAPI.V01.Models
                 return View("Views/Login/Login.cshtml");
             }
             ViewData["ModuleId"] = 6;
-            return View();
+            return View("Views/Manage/Index.cshtml");
         }
 
         /// <summary>
@@ -203,43 +203,20 @@ namespace GalaxyAPI.V01.Models
         /// <returns></returns>
         public IActionResult TestApiGalaxy(string apiCode, string pCount, string pNum, string filter)
         {
-            IdentityServerResult idrs = null;
-            string token = string.Empty;
-            string apiResult = string.Empty;
-            using (HttpClient client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(MyConfig.ConfigManager.AUTHORITY);
-                var content = new FormUrlEncodedContent(new[] {
-                    new KeyValuePair<string, string>("client_id", "glxApi002"),
-                    new KeyValuePair<string, string>("password", HttpContext.Session.GetString("password")),
-                    new KeyValuePair<string, string>("grant_type", "password"),
-                    new KeyValuePair<string, string>("client_secret", "console.write"),
-                    new KeyValuePair<string, string>("userName", HttpContext.Session.GetString("userName"))
-                    });
-                var t = client.PostAsync("/connect/token", content);
-                t.Wait();
-                var result = t.Result;
-                var resultContent = result.Content.ReadAsStringAsync().Result;
-                idrs = JsonConvert.DeserializeObject<IdentityServerResult>(resultContent);
-                token = idrs.access_token;
-            }
-            using (HttpClient client = new HttpClient())
-            {
-                client.BaseAddress = new Uri(MyConfig.ConfigManager.LOCAL);
-                client.SetBearerToken(token);
+            string userName = HttpContext.Session.GetString("userName");
+            string pwd = HttpContext.Session.GetString("password");
+            IdServerToken idsToken = new IdServerToken("glxApi002", "password", "console.write", userName,pwd);
+            IdentityServerResult idrs = idsToken.GetIdServerResult();
+            string token = idsToken == null ? string.Empty : idrs.access_token;
 
-                var content1 = new FormUrlEncodedContent(new[] {
+            var content = new FormUrlEncodedContent(new[] {
                     new KeyValuePair<string, string>("apiCode", apiCode),
                     new KeyValuePair<string, string>("pCount", pCount),
                     new KeyValuePair<string, string>("pNum", pNum),
                     new KeyValuePair<string, string>("filter",filter)
                     });
-                var t1 = client.PostAsync("/api/galaxy", content1);
-                t1.Wait();
-                var result1 = t1.Result;
-                var resultContent1 = result1.Content.ReadAsStringAsync().Result;
-                apiResult = resultContent1;
-            }
+            PostFormUrl postform = new PostFormUrl(MyConfig.ConfigManager.LOCAL, "Bearer " + token, content, "/api/galaxy");
+            String apiResult = postform.GetResult();
             return Content(apiResult);
         }
 
