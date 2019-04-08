@@ -11,9 +11,9 @@
     <title>APIList</title>
 </head>
 <body>
-    <div class="container" style="width:98%">
+    <div class="container">
         <div class="row">
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon">代码：</span>
@@ -21,7 +21,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon">名称：</span>
@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="form-group">
                     <div class="input-group">
                         <span class="input-group-addon">分组：</span>
@@ -37,18 +37,22 @@
                     </div>
                 </div>
             </div>
-            <div class="btn btn-info" id="sel_api_list">查询</div>
+            <div class="btn btn-sm btn-info" id="sel_api_list">查询</div>
         </div>
-        <table class="table table-striped" id="api_list_table">
-            <tr>
-                <th>ID</th>
-                <th>代码</th>
-                <th>名称</th>
-                <th>分组</th>
-                <th>描述</th>
-                <th>详情</th>
-            </tr>
-        </table> 
+        <div class="row">
+            <div class="col-sm-8">
+                <table class="table table-striped" id="api_list_table">
+                    <tr>
+                        @*<th>ID</th>*@
+                        <th>代码</th>
+                        <th>名称</th>
+                        @*<th>分组</th>*@
+                        <th>描述</th>
+                        <th>详情</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
     </div>
     <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript">
@@ -88,8 +92,8 @@
                         var tr = $("<tr></tr>");
                         tr.attr({ "class": "api_tr" }).appendTo(table);
 
-                        var api_id = $("<td></td>");
-                        api_id.text(jsonObj[i]["id"]).appendTo(tr);
+                        //var api_id = $("<td></td>");
+                        //api_id.text(jsonObj[i]["id"]).appendTo(tr);
 
                         var api_code = $("<td></td>");
                         api_code.text(jsonObj[i]["api_code"]).appendTo(tr);
@@ -97,8 +101,8 @@
                         var api_name = $("<td></td>");
                         api_name.text(jsonObj[i]["api_name"]).appendTo(tr);
 
-                        var api_group = $("<td></td>");
-                        api_group.text(jsonObj[i]["group_name"]).appendTo(tr);
+                        //var api_group = $("<td></td>");
+                        //api_group.text(jsonObj[i]["group_name"]).appendTo(tr);
 
                         var api_descr = $("<td></td>");
                         api_descr.text(jsonObj[i]["descr"]).appendTo(tr);
