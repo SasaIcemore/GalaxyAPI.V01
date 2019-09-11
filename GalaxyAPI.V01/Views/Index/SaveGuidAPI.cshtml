@@ -1,0 +1,166 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>SaveGuidAPI</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/css/bootstrap-select.min.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript" src="~/js/Global.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/js/i18n/defaults-zh_CN.js"></script>
+    <script type="text/javascript" src="~/js/Index/index.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-group"> 
+            <div class="input-group">
+                <span class="input-group-addon"><font color="red">*</font>API代码：</span>
+                <input type="text" class="form-control" name="api_code" id="api_code" placeholder="" AUTOCOMPLETE="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon"><font color="red">*</font>API名称：</span>
+                <input type="text" class="form-control" name="api_name" id="api_name" placeholder="" AUTOCOMPLETE="off" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon">描述：</span>
+                <input type="text" class="form-control" name="api_descr" id="api_descr" placeholder="" />
+            </div>
+        </div>
+        <br />
+        <div class="param_div" >
+            <table class="table table-striped">
+                <tr>
+                    <th>参数名</th>
+                    <th>参数类型</th>
+                    <th>描述</th>
+                </tr>
+            </table> 
+        </div>
+        <br />
+        <div class="form-group" style="display:inline-block">
+            <font color="red">*</font>分组设置：
+            <select class="selectpicker" id="sel_api_group"></select>
+        </div>
+        <a href="#" class="add_api_group"><span class="glyphicon glyphicon-plus"></span>添加分组</a>
+        <div class="form-group">
+            <font color="red">*</font>分配权限：
+            <select class="selectpicker" multiple id="sel_roles"></select>
+        </div>
+        <div class="btn btn-info" id="save_api">保存</div>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            //初始化分组下拉框
+            getSelGroups($("#sel_api_group"),0);
+            //初始化角色下拉框
+            getSelRoles($("#sel_roles"));
+
+            Request = GetRequest();
+            var id_field = Request["id_field"];
+            var fields = Request["fields"];
+            var table_name = Request["table_name"];
+            var params_str = Request["params_str"];
+            var params_arr = params_str.split(',');
+            //console.log(params_arr);
+            var table = $("table");
+            if (params_str!="") { 
+                for (var i = 0; i < params_arr.length; i++) {
+                    var tr = $("<tr></tr>");
+                    tr.appendTo(table);
+                    //参数名称
+                    var name_td = $("<td></td>");
+                    name_td.text(params_arr[i]).appendTo(tr);
+                    //参数类型
+                    var type_td = $("<td></td>");
+                    var type_sel = $("<select class='sel_param_type' id='sel_" + params_arr[i] + "'></select>");
+                    type_sel.html("<option value='string'>string</option><option value='int'>int</option><option value='double'>double</option><option value='bool'>bool</option>");
+                    type_sel.appendTo(type_td);
+                    type_td.appendTo(tr);
+                    //描述
+                    var descr_td = $("<td></td>");
+                    descr_td.html("<input type='text' class='param_descr' id='param_descr_" + params_arr[i] + "' val='' size='30' AUTOCOMPLETE='off'/>").appendTo(tr);
+                }
+            }
+
+            //添加api分组
+            $(".add_api_group").click(function () {
+                layer.open({
+                    type: 2,
+                    title: '添加API分组',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['400px', '350px'],
+                    content: '/Index/AddAPIGroup'
+                });
+            });
+
+            //保存api
+            $("#save_api").click(function () { 
+                var api_code = $("#api_code").val();
+                if (api_code == "") {
+                    layer.msg("请填写api代码");
+                    $("#api_code").focus();
+                    return;
+                 }
+                var api_name = $("#api_name").val();
+                if (api_name == "") {
+                    layer.msg("请填写api名称");
+                    $("#api_name").focus();
+                    return;
+                 }
+                var api_group = $("#sel_api_group").val();
+                var api_descr = $("#api_descr").val();
+                var api_roles = $("#sel_roles").val();
+                if (api_roles =="") { 
+                    layer.msg("请配置权限");
+                    return;
+                }
+                //参数
+                var param_list_str = "[";
+                for (var i = 0; i < params_arr.length; i++) {
+                    var param_obj_str = "{\"param_name\":\"" + params_arr[i] + "\",\"param_type\":\"" + $("#sel_" + params_arr[i]).val() + "\", \"param_descr\":\"" + $("#param_descr_" + params_arr[i]).val() + "\"}";
+                    param_list_str += param_obj_str+","
+                }
+                param_list_str = param_list_str.substring(0, param_list_str.length-1);
+                param_list_str += "]"
+                console.log(param_list_str);
+                $.ajax({
+                    url: "/Index/SaveGuidAPIAct",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "api_code": api_code,
+                        "api_name": api_name,
+                        "api_group": api_group,
+                        "api_descr": api_descr,
+                        "api_roles": api_roles,
+                        "id_field": id_field,
+                        "fields": fields,
+                        "table_name": table_name,
+                        "query_content": "",
+                        //"params_str": params_str
+                        "params_str": param_list_str
+                    },
+                    success: function (data) {
+                        layer.msg(data);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

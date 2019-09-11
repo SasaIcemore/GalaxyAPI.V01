@@ -1,0 +1,93 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>UserHome</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <form method="post" action="ChangePWD" onsubmit="return false;">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><font color="red">*</font>修改密码：</span>
+                            <input type="password" class="form-control" name="new_pwd" id="new_pwd" placeholder="新密码" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <span class="input-group-addon"><font color="red">*</font>确认密码：</span>
+                            <input type="password" class="form-control" name="comfirm_pwd" id="comfirm_pwd" placeholder="确认密码" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 text-center">
+                    <input type="submit" id="submit" class="btn btn-info text-center" value="确定" />
+                </div>
+            </div>
+        </form>
+    </div>
+    <script type="text/javascript" src="~/js/sha1.js"></script>
+    <script type="text/javascript">
+    $(function () {
+        $("#submit").click(function () {
+            var flag = chkVal();
+            if (parseInt(flag,10) == 1) {
+                $.ajax({
+                    url: "/Manage/ChangePWD",
+                    type: "post",
+                    cache: false,
+                    async:false,
+                    data: {
+                        "new_pwd": $("#new_pwd").val(),
+                        "comfirm_pwd": $("#comfirm_pwd").val()
+                    },
+                    success: function (data) {
+                        layer.msg(data);
+                    }
+                });
+            }
+        });
+    });
+    function chkVal() {
+        var new_pwd = $("#new_pwd").val();
+        var comfirm_pwd = $("#comfirm_pwd").val();
+        var flag = 0;
+        if (new_pwd == "" || comfirm_pwd == "") {
+            layer.msg('请填写密码');
+            return flag;
+        }
+        new_pwd = hex_sha1(new_pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+        comfirm_pwd = hex_sha1(comfirm_pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+        if (new_pwd != comfirm_pwd) {
+            layer.msg('新密码与确认密码不一致');
+            return flag;
+        } else {
+            $("#new_pwd").val(new_pwd);
+            $("#comfirm_pwd").val(comfirm_pwd);
+            flag = 1;
+        }
+        return flag;
+    }
+
+    </script>
+</body>
+</html>

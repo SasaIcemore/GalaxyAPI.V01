@@ -1,0 +1,44 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>添加角色</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        角色名称：
+        <input type="text" class="form-control" id="role_name" value=""/>
+        <hr />
+        <div class="btn btn-info" id="add_role">添加</div>
+
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    $(function () { 
+        $("#add_role").click(function () { 
+            $.ajax({
+                url: "/manage/AddRoleAct",
+                type: "post",
+                cache: false,
+                data: {
+                    "role_name": $("#role_name").val()
+                },
+                success: function (data) { 
+                    layer.msg(data);
+                }
+            });
+        });
+    });
+</script>

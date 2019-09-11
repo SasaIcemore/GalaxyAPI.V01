@@ -1,0 +1,182 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>RoleInfo</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/switch_btn.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript" src="~/js/switch_btn.js"></script>
+</head>
+<body>
+    <input type="hidden" class="moduleJson" value="@ViewData["moduleJson"]" />
+    <input type="hidden" class="menuJson" value="@ViewData["menuJson"]" />
+    <input type="hidden" class="menuRoleJson" value="@ViewData["menuRoleJson"]" />
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="role_is_del">
+                    是否启用：
+                    @{
+                        if ((bool)ViewData["is_del"] == true)
+                        {
+                            <div class="slide-btn">
+                                <div class="inner-off" id="inner" style="left:-51px;">
+                                    <input style="display:none;" type="checkbox">
+                                    <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="slide-btn">
+                                <div class="inner-on" id="inner">
+                                    <input style="display:none;" type="checkbox" checked>
+                                    <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <br />
+                <div>
+                    初始化/刷新：
+                    <div class="btn btn-info" id="init_menu_role">初始化/刷新</div>
+                </div>
+                <hr />
+                <div class="module_content"></div>
+            </div>
+        </div>
+    </div>
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript">
+    $(function () {
+        var moduleJson = eval($(".moduleJson").val());
+        var menuJson = eval($(".menuJson").val());
+        var menuRoleJson = eval($(".menuRoleJson").val());
+        var module_content = $(".module_content");
+        //生成模块-菜单节点
+        init_page(moduleJson, menuJson, menuRoleJson, module_content);
+        //渲染开关按钮
+        switch_btn_click();
+        //设置角色 启用/关闭
+        set_role();
+        //设置角色对应的菜单 启用/关闭
+        cli_menu_role_switch();
+        //初始化/刷新
+        init_menu_role();
+    });
+
+    function init_page(moduleJson, menuJson, menuRoleJson, module_content) {
+        for (var i = 0; i < moduleJson.length; i++) {
+            var h4 = $("<h4></h4>");
+            h4.html("<b>" + moduleJson[i]["module_name"] + "</b>").appendTo(module_content);
+
+            var table = $("<table></table>");
+            table.attr({ "class": "table table-striped" }).appendTo(module_content);
+            for (var j = 0; j < menuJson.length; j++) {
+                if (menuJson[j]["module_id"] != moduleJson[i]["id"]) {
+                    continue;
+                } else {
+                    var tr = $("<tr></tr>");
+                    tr.css({"border-bottom":"1px solid #cccccc"});
+                    table.append(tr);
+
+                    var name_td = $("<td></td>");
+                    name_td.width("200px").text(menuJson[j]["menu_name"]);
+                    tr.append(name_td);
+
+                    var descr_td = $("<td></td>");
+                    descr_td.width("200px").text(menuJson[j]["descr"]);
+                    tr.append(descr_td);
+
+                    var chk_td = $("<td></td>");
+                    tr.append(chk_td);
+                    for (var k = 0; k < menuRoleJson.length;k++) {
+                        if (menuRoleJson[k]["menu_id"] == menuJson[j]["id"]) {
+                            if (menuRoleJson[k]["is_del"] == false) {
+                                chk_td.html("<div class='slide-btn'><div class='inner-on' role_id='" +@ViewData["roleId"]+"' menu_id='" + menuJson[j]["id"] + "' name='switch'><input style='display:none;' type='checkbox' checked><span class='left'>ON</span><span class='space'> </span><span class='right'>OFF</span></div></div>");
+                            } else {
+                                chk_td.html("<div class='slide-btn'><div class='inner-off' style='left: -51px;' role_id='" +@ViewData["roleId"]+"' menu_id='" + menuJson[j]["id"] + "' name='switch'><input style='display:none;' type='checkbox' checked><span class='left'>ON</span><span class='space'> </span><span class='right'>OFF</span></div></div>");
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+
+    function set_role() {
+        $(".role_is_del div div").click(function () {
+            var chk_val = $(this).attr("class");
+            var is_del = false;
+            if (chk_val == "inner-off") {
+                is_del = true;
+            }
+            $.ajax({
+                    url: "/Manage/SetRoleDel",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "is_del": is_del,
+                        "role_id": '@ViewData["roleId"]'
+                    },
+                    success: function (data) {
+                        layer.msg(data);
+                    }
+                });
+        });
+    }
+
+    function cli_menu_role_switch() {
+        $("div[name='switch']").click(function () {
+            var is_del = $(this).attr("class") =="inner-on"?false:true;
+            var menu_id = $(this).attr("menu_id");
+            var role_id = $(this).attr("role_id");
+            $.ajax({
+                url: "/Manage/SetMenuRole",
+                type: "post",
+                cache: false,
+                data: {
+                    "is_del": is_del,
+                    "menu_id": menu_id,
+                    "role_id": role_id
+                },
+                success: function (data) {
+                    layer.msg(data);
+                }
+            });
+        });
+    }
+
+    function init_menu_role() {
+        $("#init_menu_role").click(function () {
+            var role_id = '@ViewData["roleId"]';
+            $.ajax({
+                url: "/Manage/InitMenuRole",
+                type: "post",
+                cache: false,
+                data: {
+                    "role_id": role_id
+                },
+                success: function (data) {
+                    layer.msg(data);
+                }
+            });
+        });
+    }
+    </script>
+
+</body>
+</html>

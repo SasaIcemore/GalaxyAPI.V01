@@ -1,0 +1,118 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>添加用户</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript" src="~/js/sha1.js"></script>
+    <script type="text/javascript" src="~/js/Global.js"></script>
+</head>
+<body>
+    <div class="container">
+        <br />
+        <div class="row">
+            <div class="col-md-1">
+                用户名：
+                <input type="text" class="form-control" name="user_name" value="" />
+                <hr />
+                密码：
+                <input type="password" class="form-control" name="pwd" value=""/>
+                <br />
+                确认密码：
+                <input type="password" class="form-control" name="confirm_pwd" value="" />
+                <hr />
+                所属部门/组织
+                <input type="text" class="form-control" name="dept_name" value="" />
+                <hr />
+                角色：
+                <div style="width:300px">
+                    <ul class="role_ul"></ul>
+                </div>
+                <hr />
+                <div class="btn btn-info" id="add_user">添加</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script type="text/javascript">
+    $(function () {
+        $.ajax({
+            url: "/manage/GetRoles",
+            type: "post",
+            cache: false,
+            data: {
+                "all_role": false
+            },
+            success: function (data) { 
+                var jsonObj = eval("(" + data + ")");
+                for (var i = 0; i < jsonObj.length;i++) { 
+                    var li = $("<li></li>");
+                    var ul = $(".role_ul");
+                    ul.append(li);
+                    var radio = $("<input/>");
+                    radio.attr({ "type": "radio", "class": "role_radio", "id": jsonObj[i]["id"], "name": "role_radio" });
+                    if (jsonObj[i]["id"] == parseInt(0,10)){ 
+                        radio.attr("checked", 'true');
+                    }
+                    radio.val(jsonObj[i]["id"]);
+                    radio.appendTo(li);
+                    li.html(li.html() + jsonObj[i]["role_name"]);
+                }
+            }
+        });
+        $("#add_user").click(function () { 
+            var pwd = $("input[name='pwd']").val();
+            var confirm_pwd = $("input[name='confirm_pwd']").val();
+            
+            if (pwd == "" || confirm_pwd == "") { 
+                layer.msg('请填写密码');
+                return false;
+            } 
+            if (pwd != confirm_pwd) { 
+                layer.msg('密码与确认密码不一致');
+                return false;
+            }  
+            var pwd = hex_sha1(pwd).substr(PWD_START_INDEX, PWD_END_INDEX);
+            var user_name = $("input[name='user_name']").val();
+            if (user_name == "") {
+                layer.msg('请填写用户名');
+                return false;
+            }
+            var dept_name = $("input[name='dept_name']").val();
+            var role = $("input[name='role_radio']:checked").attr("id");
+            if (role == undefined) { 
+                layer.msg('请选择角色');
+                return false;
+            }
+            add_user(user_name, dept_name, role, pwd);
+        });
+    });
+    function add_user(user_name, dept_name, role, pwd) {
+        $.ajax({
+            url: "/manage/AddUserAct",
+            type: "post",
+            cache: false,
+            data: {
+                "user_name": user_name,
+                "dept_name": dept_name,
+                "role_id": role,
+                "pwd": pwd
+            },
+            success: function (data) { 
+                layer.msg(data);
+                var index = parent.layer.getFrameIndex(window.name);
+                setTimeout(function () { parent.layer.close(index) }, 1000);
+            }
+        });
+    }
+</script>

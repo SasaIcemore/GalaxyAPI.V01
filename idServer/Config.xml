@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<config>
+  <galaxy_token val="http://192.168.0.207:8084/connect/token" descr="获取服务端token"></galaxy_token>
+  <userinfo val="http://192.168.0.207:8084/connect/userinfo" descr="idserver 身份信息"></userinfo>
+  <authority val="http://192.168.0.207:8084" descr="客户端身份验证"></authority>
+  <source DbType="postgresql" Host="192.168.0.207" UserName="postgres" Password="console.write" Database="glxyapi" descr="配置权限的数据库"></source>
+  
+  <wx_mp is_use="off" descr="是否启用微信公众号接口 on--启用 off--关闭">
+    <token val="console" descr="自己设置的token"></token>
+    <appid val="wx0170ac4607e785d8" descr="APPID"></appid>
+    <appsecret val="e72faad16ab1e9f5d59be1bf9c6cb5d8" descr="APPSECRET"></appsecret>
+    <access_token_url val="https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential" descr="ACCESS_TOKEN_URL"></access_token_url>
+    <wxmenu val="https://api.weixin.qq.com/cgi-bin/menu/create?access_token=" descr="设置微信菜单，Post请求"></wxmenu>
+  </wx_mp>
+  
+  <wx_work is_use="off" descr="是否启用企业微信接口 on--启用 off--关闭">
+    <cropid val="ww82dced13e7aea480" descr="cropid"></cropid>
+    <tongxun_secret val="4bnGRujH4twEsK60QSzECltD4UDLpl8FXwYUdKun0Dk" descr="通讯录管理secret"></tongxun_secret>
+    <wx_work_appsecret val="kUZPYqFBq7Yk7A5lafqv2Zt54XYg-wZdd4j4XwnFVeg" descr="企业微信应用的secret"></wx_work_appsecret>
+  </wx_work>
+  
+</config>

@@ -1,0 +1,337 @@
+﻿
+@{
+    Layout = null;
+}
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="~/layer/theme/default/layer.css" rel="stylesheet"/>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <style>
+        .fieldDiv {
+            border: thin solid #cccccc;
+            width: 90%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div>
+                    <form name="form1">
+                        <input type="hidden" id="hid_database_type" value="@ViewData["dbType"]" />
+                        @Html.AntiForgeryToken()
+                        <div class="row">
+                            <div class="col-md-2"><div class="btn btn-info" id="reload_page">刷新</div></div>
+                        </div>
+                        <br />
+                        <h4>数据表：</h4>@Html.DropDownList("tblNameList")
+                        <br />
+                        <br />
+                        <h4>字段：</h4>
+                        <div class="fieldDiv"></div>
+                        <br />
+                        <div>
+                            <h4>筛选条件：</h4>
+                            <div class="row">
+                                <div class="col-md-2">逻辑</div>
+                                <div class="col-md-3">字段</div>
+                                <div class="col-md-3">操作符</div>
+                                <div class="col-md-3">值</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <select id="logic">
+                                        <option value="and">and</option>
+                                        <option value="or">or</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="sel_query_field"></select>
+                                </div>
+                                <div class="col-md-3">
+                                    <select id="operation">
+                                        <option value=">">></option>
+                                        <option value="<"><</option>
+                                        <option value="=">=</option>
+                                        <option value="!=">!=</option>
+                                        <option value="like">like</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="text" id="query_val" value="" size="6" />
+                                </div>
+                            </div>
+                            <br />
+                            <div class="row">
+                                <div class="col-md-1">
+                                    <div class="btn btn-info btn-sm" id="add_query">=></div>
+                                </div>
+                            </div>
+                            <br />
+                        </div>
+                        <br />
+                        <h4>参数配置：</h4>
+                        <div id="set_params" style=" width: 90%;">
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2"><b>参数名</b></div>
+                                <div class="col-md-2"><b>描述</b></div>
+                                <div class="col-md-2"><b>运算符</b></div>
+                                <div class="col-md-2"><b>值</b></div>
+                                <div class="col-md-1"><b>删除</b></div>
+                            </div>
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2">pageCount</div>
+                                <div class="col-md-2">查询的记录数</div>
+                                <div class="col-md-2">=</div>
+                                <div class="col-md-2">
+                                    <select id="pageCount">
+                                        <option value="50">50</option>
+                                        <option value="100">100</option>
+                                        <option value="500">500</option>
+                                        <option value="1000">1000</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-1">&nbsp;</div>
+                            </div>
+                            <div class="row" style="border-bottom:thin solid #cccccc">
+                                <div class="col-md-2">pageNum</div>
+                                <div class="col-md-2">查询第几页</div>
+                                <div class="col-md-2">=</div>
+                                <div class="col-md-2"><input type="text" size="4" id="pageNum" value="" /></div>
+                                <div class="col-md-1">&nbsp;</div>
+                            </div>
+                        </div>
+                        <br />
+                        <br />
+
+                        <div class="btn btn-info" id="setParams">查询</div>
+                        <br />
+                        <textarea rows="10" cols="110" name="query_sql" id="query_sql" style=" width: 90%;"></textarea>
+                        <br />
+
+                        <br />
+                        <div class="btn btn-info" id="save_api">保存为API</div>
+                    </form>
+                </div>
+                <br />
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            //数据表更换后显示字段
+            $("#tblNameList").change(function () {
+                $.ajax({
+                    url: "/index/GetDataFields",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "__RequestVerificationToken": $("[name='__RequestVerificationToken']").val(),
+                        "tableName": $("#tblNameList").val()
+                    },
+                    success: function (data) {
+                        fields = "";
+                        id_field = "";
+                        $(".fieldDiv").empty();
+                        if (data != "" || data != "null") {
+                            var json = eval("(" + data + ")");
+                            var sel_query_field = $("#sel_query_field");
+                            sel_query_field.empty();
+                            for (var i = 0; i < json.length; i++) {
+                                //拼接字段
+                                var selDiv = $("<div></div>");
+                                selDiv.css({"width":"150px","display":"inline-block","margin-left":"20px"});
+                                var fieldLable = $("<lable></lable>");
+                                fieldLable.text(json[i].name);
+                                selDiv.append(fieldLable);
+                                var chkbox = $("<input type='checkbox'/>");
+                                chkbox.attr({"class":"chk_field"});
+                                chkbox.val(json[i].name);
+                                selDiv.append(chkbox);
+                                $(".fieldDiv").append(selDiv);
+                                //构成查询条件的字段列表
+                                var query_option = $("<option></option>");
+                                query_option.val(json[i].name).text(json[i].name);
+                                query_option.appendTo(sel_query_field);
+                            }
+                        }
+                    }
+                });
+            });
+
+            //生成字段的查询条件
+            $("#add_query").click(function () {
+                var logic = $("#logic").val();
+                var field = $("#sel_query_field").val();
+                var operation = $("#operation").val();
+                var field_val = $("#query_val").val();
+
+                if (field == null) {
+                    layer.msg("请选择字段");
+                    return;
+                }
+                if (field_val == "") {
+                    layer.msg("请填写筛选的字段值");
+                    $("#query_val").focus();
+                    return;
+                }
+
+                var div_row = $("<div></div>");
+                div_row.attr({ "class": "row" }).css({ "border-bottom": "thin solid #cccccc" }).appendTo($("#set_params"));
+
+                var params_name_div = $("<div></div>");
+                params_name_div.attr({ "class": "col-md-2 params" }).text(field).appendTo(div_row);
+
+                var params_descr_div = $("<div><div>");
+                params_descr_div.attr({ "class": "col-md-2" }).text(" ").appendTo(div_row);
+
+                var params_operation_div = $("<div><div>");
+                params_operation_div.attr({ "class": "col-md-2" }).text(operation).appendTo(div_row);
+
+                var params_val_div = $("<div><div>");
+                params_val_div.attr({ "class": "col-md-2 filter_text" }).text(" " + logic+" " + formatParamVal(operation, field, field_val)).appendTo(div_row);
+
+                var params_val_div = $("<div><div>");
+                params_val_div.attr({ "class": "col-md-2" }).html('<div class="btn btn-warning btn-sm" row_clear="row_clear">清除</div >').appendTo(div_row);
+                params_val_div.on('click', function () {
+                    div_row.remove();
+                });
+            });
+
+            //清除字段的查询条件
+            $("#clear_query_content").click(function () {
+                $("#query_content").text("");
+            });
+
+            var fields = "";  //要查询的字段
+            var id_field = "";//用于sql分页
+
+            //将参数传递返回查询结果
+            $("#setParams").click(function () {
+                fields = "";
+                id_field = "";
+                var db_type = $("#hid_database_type").val();
+                var chk_fields = $(".chk_field:checked");
+                if (chk_fields.length > 0) {
+                    if (db_type == "sqlServer") {
+                        id_field = chk_fields.val();
+                        chk_fields.each(function () {
+                            fields += $(this).val() + ",";
+                        });
+                    } else {
+                        chk_fields.each(function () {
+                            fields += $(this).val() + ",";
+                        });
+                    }
+
+                } else {
+                    var chk_all_fields = $(".chk_field");
+                    if (db_type == "sqlServer") {
+                        id_field = chk_all_fields.val();
+                        chk_all_fields.each(function () {
+                            fields += $(this).val() + ",";
+                        });
+                    } else {
+                        chk_all_fields.each(function () {
+                            fields +=  $(this).val() + ",";
+                        });
+                    }
+                }
+                fields = fields.substr(0, fields.length - 1);
+                var table_name = $("#tblNameList").val();
+                var page_count = $("#pageCount").val();
+                var page_num = $("#pageNum").val();
+                if (page_num == "" || isNaN(page_num)) {
+                    page_num = 1;
+                }
+                
+                var filter_str = "";
+                var filter = $(".filter_text");
+                filter.each(function () {
+                    filter_str = filter_str + $(this).text();
+                });
+                var query_content = $("#query_content").text() + filter_str;
+                $.ajax({
+                    url: "/index/MakeSql",
+                    type: "post",
+                    cache: false,
+                    data: {
+                       
+                        "id_field": id_field,
+                        "fields": fields,
+                        "table_name": table_name,
+                        "page_count": page_count,
+                        "page_num": page_num,
+                        "query_content": query_content
+                    },
+                    success: function (data) {
+                        $("#query_sql").val(data);
+                    }
+                });
+            });
+
+            //刷新
+            $("#reload_page").click(function () {
+                $.ajax({
+                    url: "/Index/GuideModel",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "__RequestVerificationToken": $("[name='__RequestVerificationToken']").val(),
+                    },
+                    success: function (data) {
+                        $("#content_body").html(data);
+                    }
+                });
+            });
+            //保存api
+            $("#save_api").click(function () { 
+                if (fields=="") { 
+                    layer.msg("请选择字段");
+                    return;
+                }
+                var params_str = "";
+                var params = $(".params");
+                var param_arr = [];
+                params.each(function () {
+                    param_arr.push($(this).text());
+                });
+                for (var i = 0; i < param_arr.length; i++) {
+                    if (i > 0) {
+                        //参数名相同过滤
+                        if (param_arr[i] == param_arr[i - 1]) {
+                            continue;
+                        } else {
+                            params_str += "," + param_arr[i];
+                        }
+                    } else {
+                        params_str = params_str + param_arr[i];
+                    }
+                }
+                layer.open({
+                    type: 2,
+                    title: '保存API',
+                    shadeClose: true,
+                    shade: 0.8,
+                    area: ['700px', '550px'],
+                    content: '/Index/SaveGuidAPI?id_field=' + id_field + '&fields=' + fields + '&table_name=' + $("#tblNameList").val() + '&params_str=' + params_str
+                });
+            });
+        });
+        function formatParamVal(operation, field, field_val) { 
+            var content_part = "";
+            if (operation == "like") {
+                content_part = field + " like \'%" + field_val + "%\'";
+            }
+            else {
+                content_part = field + operation + field_val;
+            }
+            return content_part;
+        }
+    </script>
+</body>
+</html>

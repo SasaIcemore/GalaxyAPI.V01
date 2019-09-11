@@ -1,0 +1,140 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>APIList</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-2">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">代码：</span>
+                        <input type="text" class="form-control" id="pcode" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">名称：</span>
+                        <input type="text" class="form-control" id="pname" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">分组：</span>
+                        <input type="text" class="form-control" id="pgroup" placeholder="" AUTOCOMPLETE="off" />
+                    </div>
+                </div>
+            </div>
+            <div class="btn btn-sm btn-info" id="sel_api_list">查询</div>
+        </div>
+        <div class="row">
+            <div class="col-sm-8">
+                <table class="table table-striped" id="api_list_table">
+                    <tr>
+                        @*<th>ID</th>*@
+                        <th>代码</th>
+                        <th>名称</th>
+                        @*<th>分组</th>*@
+                        <th>描述</th>
+                        <th>详情</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            //生成api列表
+            getList($("#pcode").val(), $("#pname").val(), $("#pgroup").val());
+
+            $("#sel_api_list").click(function () {
+                getList($("#pcode").val(), $("#pname").val(), $("#pgroup").val());
+            });
+        });
+
+        function getList(pcode, pname, pgroup) {
+            $.ajax({
+                url: "/Index/SelApiList",
+                type: "post",
+                cache: false,
+                data: {
+                    "pcode": pcode,
+                    "pname": pname,
+                    "pgroup": pgroup
+                },
+                success: function (data) {
+                    var table = $("#api_list_table");
+                    if ($(".api_tr").length > 0) {
+                        $(".api_tr").remove();
+                    }
+                    getDataTbl(data, table);
+                }
+            });
+        }
+        function getDataTbl(jsonStr, table) { 
+            var jsonObj = eval("(" + jsonStr + ")");
+            if (jsonObj != null) {
+                for (var i = 0; i < jsonObj.length; i++) { 
+                    if (jsonObj[i]["is_api_del"]==false) { 
+                        var tr = $("<tr></tr>");
+                        tr.attr({ "class": "api_tr" }).appendTo(table);
+
+                        //var api_id = $("<td></td>");
+                        //api_id.text(jsonObj[i]["id"]).appendTo(tr);
+
+                        var api_code = $("<td></td>");
+                        api_code.text(jsonObj[i]["api_code"]).appendTo(tr);
+
+                        var api_name = $("<td></td>");
+                        api_name.text(jsonObj[i]["api_name"]).appendTo(tr);
+
+                        //var api_group = $("<td></td>");
+                        //api_group.text(jsonObj[i]["group_name"]).appendTo(tr);
+
+                        var api_descr = $("<td></td>");
+                        api_descr.text(jsonObj[i]["descr"]).appendTo(tr);
+
+                        var btn_td = $("<td></td>");
+                        var btn_div = $("<div></div>");
+                        btn_div.attr({ "class": "btn btn-info btn-sm", "id": jsonObj[i]["id"], "api_code": jsonObj[i]["api_code"], "is_del": jsonObj[i]["is_api_del"] }).text("详情").appendTo(tr);
+                        btn_div.click(function () {
+                            cli_api_info($(this).attr("id"), $(this).attr("api_code"), $(this).attr("is_del"));
+                        });
+                    }
+                }
+             }
+        }
+
+        //api属性页
+        function cli_api_info(api_id, api_code, is_del) { 
+            $.ajax({
+                url: "/Index/ApiInfo",
+                type: "post",
+                cache: false,
+                data: {
+                    "api_id": api_id,
+                    "api_code": api_code,
+                    "is_del": is_del
+                },
+                success: function (data) {
+                    $("#content_body").html(data);
+                }
+            });
+        }
+      
+    </script>
+</body>
+</html>

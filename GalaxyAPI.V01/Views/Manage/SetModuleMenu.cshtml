@@ -1,0 +1,159 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>SetModuleMenu</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/switch_btn.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript" src="~/js/switch_btn.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-7">
+                <input type="hidden" class="hid_menu" value="@ViewData["module_menu_json"]" />
+                <div class="btn btn-info" id="add_menu">添加菜单</div>
+                <div>
+                    <span class="text-left">是否启用模块</span>
+                    @{
+                        if ((bool)ViewData["is_del"])
+                        {
+                            <div class="slide-btn">
+                                <div class="inner-off" id="inner" style="left:-51px;">
+                                    <input style="display:none;" type="checkbox">
+                                    <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="slide-btn">
+                                <div class="inner-on" id="inner">
+                                    <input style="display:none;" type="checkbox" checked>
+                                    <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+                <br />
+                <div>
+                    <span class="text-left">首页名称</span>
+                    <input type="text" id="module_fir_page" value="@ViewData["module_index"]" />
+                </div>
+                <br />
+                <div class="btn btn-info" id="save_module">保存</div>
+                <br /><hr />
+                <div class="menu_content"></div>
+                <input type="hidden" id="hid_module_id" value="@ViewData["module_id"]" />
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+    <script type="text/javascript">
+    $(function () {
+        var hid_menu_json = eval($(".hid_menu").val());
+        var menu_content = $(".menu_content");
+        for (var i = 0; i < hid_menu_json.length; i++) {
+            var row_div = $("<div></div>");
+            row_div.attr({ "class": "row" }).css({"border-bottom":"1px solid #cccccc"});
+            menu_content.append(row_div);
+
+            var menu_div = $("<div></div>");
+            menu_div.attr({ "class": "col-md-3" }).css({"display":"inline"}).text(hid_menu_json[i]["menu_name"]);
+            row_div.append(menu_div);
+
+            var descr_div = $("<div></div>");
+            descr_div.attr({ "class": "col-md-3" }).css({"display": "inline" }).text(hid_menu_json[i]["descr"]);
+            row_div.append(descr_div);
+
+            var edit_div = $("<div></div>");
+            edit_div.attr({ "class": "col-md-3" }).html("<div class='btn btn-info edit_btn' menu_id='" + hid_menu_json[i]["id"] + "' menu_name='" + hid_menu_json[i]["menu_name"] + "' is_del='" + hid_menu_json[i]["is_del"] + "' descr='" + hid_menu_json[i]["descr"] +"'>修改</div>");
+            row_div.append(edit_div);
+
+
+        }
+
+        var add_menu = $("#add_menu");
+        add_menu.click(function () {
+            layer.open({
+                type: 2,
+                title: '添加菜单',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['400px', '350px'],
+                content: '/manage/AddMenu?module_id=@ViewData["module_id"]'
+            });
+        });
+        switch_btn_click();
+        save_module();
+        edit_btn();
+    });
+    function save_module() {
+        $("#save_module").click(function () {
+            var is_del = $("#inner").attr("class") == "inner-off" ? true : false;
+            var module_fir_page = $("#module_fir_page").val();
+            if (module_fir_page == "") {
+                layer.msg("请填写首页名称");
+                return;
+            }
+            $.ajax({
+                url: "/Manage/SaveModule",
+                type: "post",
+                cache: false,
+                async: false,
+                data: {
+                    "module_id": '@ViewData["module_id"]',
+                    "is_del": is_del,
+                    "module_fir_page": module_fir_page
+                },
+                success: function (data) {
+                    layer.msg(data);
+                }
+            });
+        });
+    }
+
+    function edit_btn() {
+        $(".edit_btn").click(function () {
+            layer.open({
+                type: 2,
+                title: '修改菜单',
+                shadeClose: true,
+                shade: 0.8,
+                area: ['400px', '350px'],
+                content: '/manage/EditMenu?menu_id=' + $(this).attr("menu_id") + '&menu_name=' + $(this).attr("menu_name") + '&is_del=' + $(this).attr("is_del") + '&descr=' + $(this).attr("descr"),
+                end: function () {
+                    $.ajax({
+                        url: "/Manage/SetModuleMenu",
+                        type: "post",
+                        cache: false,
+                        async: false,
+                        data: {
+                            "module_id": '@ViewData["module_id"]',
+                            "is_del": '@ViewData["is_del"]',
+                            "module_index": $("#module_fir_page").val()
+                        },
+                        success: function (data) {
+                            $("#content_body").html(data);
+                        }
+                    });
+                }
+            });
+        });
+    }
+    </script>
+</body>
+</html>

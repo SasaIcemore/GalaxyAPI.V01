@@ -1,0 +1,80 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>EditMenu</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/switch_btn.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/js/switch_btn.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        @*@ViewData["MenuId"]*@
+        菜单代码：@ViewData["MenuName"]
+        <br />
+        是否启用：
+        @{
+            if ((bool)ViewData["IsDel"])
+            {
+                <div class="slide-btn">
+                    <div class="inner-off" id="inner" style="left:-51px;">
+                        <input style="display:none;" type="checkbox">
+                        <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="slide-btn">
+                    <div class="inner-on" id="inner">
+                        <input style="display:none;" type="checkbox" checked>
+                        <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                    </div>
+                </div>
+            }
+        }
+        <br />
+        菜单名称：
+        <br />
+        <textarea id="descr" cols="50" rows="5">@ViewData["Descr"]</textarea>
+        <div class="btn btn-info" id="edit_menu">修改</div>
+    </div>
+    <script type="text/javascript">
+        $(function () { 
+            switch_btn_click();
+            edit_menu();
+        });
+
+        function edit_menu() {
+            $("#edit_menu").click(function () { 
+                var is_del = $("#inner").attr("class") == "inner-off" ? true : false;
+                var descr = $("#descr").val();
+                //alert(is_del+"==="+descr);
+                $.ajax({
+                url: "/Manage/SetMenuAct",
+                type: "post",
+                cache: false,
+                data: {
+                    "menu_id": '@ViewData["MenuId"]',
+                    "is_del": is_del,
+                    "descr": descr
+                },
+                success: function (data) {
+                    layer.msg(data);
+                }
+            });
+            });
+        }
+    </script>
+</body>
+</html>

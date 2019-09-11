@@ -1,0 +1,162 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>ApiPropView</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/switch_btn.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/css/bootstrap-select.min.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/js/switch_btn.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/dist/js/bootstrap-select.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap-select-1.12.4/bootstrap-select-1.12.4/js/i18n/defaults-zh_CN.js"></script>
+    <script type="text/javascript" src="~/js/Index/index.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8">
+                <div id="reload" class="btn btn-info">刷新</div>
+                <h3>@ViewData["api_name"]</h3>
+                <br />
+                <h4>是否启用</h4>
+                @{ if ((bool)ViewData["is_del"])
+                    {
+                        <div class="slide-btn">
+                            <div class="inner-off" id="inner" style="left:-51px;">
+                                <input style="display:none;" type="checkbox">
+                                <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="slide-btn">
+                            <div class="inner-on" id="inner">
+                                <input style="display:none;" type="checkbox" checked>
+                                <span class="left">ON</span><span class="space"> </span><span class="right">OFF</span>
+                            </div>
+                        </div>
+                    }
+                }
+                <hr />
+                <br />
+                <h4>分组</h4>
+                <select class="selectpicker" id="sel_api_group"></select>
+                <hr />
+                <br />
+                <h4>角色</h4>
+                <div class="role_div" style="border:thin solid #cccccc"></div>
+                <hr />
+                <br />
+                <div class="btn btn-info" id="edit_btn">修改</div>
+                @*<div id="timmer">0</div>*@
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            switch_btn_click();
+            getSelGroups($("#sel_api_group"),'@ViewData["group_id"]');
+            $("#reload").click(reload_page);
+            init_roles();
+            $("#edit_btn").click(edit);
+            //var i = 0;
+            //setInterval(function () {
+            //    $("#timmer").text(i++);
+            //    console.log(i++);
+            //}, 1000);
+        });
+
+        function reload_page() {
+            $.ajax({
+                    url: "/index/ApiPropView",
+                    cache: false,
+                    type: "post",
+                    data: {
+                        "api_id": '@ViewData["api_id"]',
+                        "api_code":  '@ViewData["api_code"]',
+                        "api_name":  '@ViewData["api_name"]',
+                        "is_del":  '@ViewData["is_del"]',
+                    },
+                    success: function (data) {
+                        $("#content_body").html(data);
+                    }
+            });
+        }
+
+        function init_roles() { 
+            var roles_json_str = getRoles();
+            var api_roles_json_str = get_api_roles('@ViewData["api_id"]');
+            if (roles_json_str!="") { 
+                var jsonObj = eval("(" + roles_json_str + ")");
+                for (var i = 0; i < jsonObj.length;i++) { 
+                    var role = $("<div></div>");
+                    role.width("150px")
+                        .css({"display":"inline-block"})
+                        .text(jsonObj[i]["role_name"])
+                        .appendTo($(".role_div"));
+
+                    var chk = $("<input/>");
+                    chk.attr({
+                        "class":"chk_role",
+                        "type": "checkbox",
+                        "id": "role_id_" + jsonObj[i]["id"]
+                    }).appendTo(role);
+
+                    if (api_roles_json_str != "") {
+                        var api_role_json = eval("(" + api_roles_json_str + ")");
+                        for (var j = 0; j < api_role_json.length; j++) {
+                            if (api_role_json[j]["role_id"] == jsonObj[i]["id"]) {
+                                chk.attr({ "checked": true });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        function edit() {
+            var is_del = false;
+            var chk_val = $(".slide-btn div").attr("class");
+            if (chk_val == "inner-off") {
+                is_del = true;
+            }
+
+            var group_id = $("#sel_api_group").val();
+
+            var roles = [];
+            $(".chk_role").each(function () {
+                var this_id = $(this).attr("id");
+                var role_id = this_id.substr(8, this_id.length - 7);
+                if ($(this).prop("checked") == true) { 
+                    roles.push(role_id);
+                }
+            });
+            $.ajax({
+                url: "/Index/EditApi",
+                type: "post",
+                cache: false,
+                data: {
+                    "api_id": '@ViewData["api_id"]',
+                    "is_del": is_del,
+                    "group_id": group_id,
+                    "roles": roles
+                },
+                success: function (data) { 
+                    layer.msg(data);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

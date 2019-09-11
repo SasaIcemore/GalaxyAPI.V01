@@ -1,0 +1,57 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>AddAPIGroup</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon">分组名称：</span>
+                <input type="text" class="form-control" name="api_group_name" id="api_group_name" placeholder="" />
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-group">
+                <span class="input-group-addon">描述：</span>
+                <input type="text" class="form-control" name="api_group_descr" id="api_group_descr" placeholder="" />
+            </div>
+        </div>
+        <div class="btn btn-info"  id="save_api_group">保存</div>
+    </div>
+    <script>
+        $(function () {
+            $("#save_api_group").click(function () {
+                $.ajax({
+                    url: "/index/AddAPIGroupAct",
+                    type: "post",
+                    cache: false,
+                    data: {
+                        "api_group_code": $("#api_group_code").val(),
+                        "api_group_name": $("#api_group_name").val(),
+                        "api_group_descr": $("#api_group_descr").val(),
+                    },
+                    success: function (data) { 
+                        layer.msg(data);
+                        $("#api_group_code").val("");
+                        $("#api_group_name").val("");
+                        $("#api_group_descr").val("");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>添加菜单</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+</head>
+<body>
+    <div class="container">
+        菜单：<input type="text" class="form-control" id="menu_name" value="" />
+        描述：
+        <textarea id="descr" cols="50" rows="5"></textarea>
+        <div class="btn btn-info" id="add">添加</div>
+    </div>
+    <input type="hidden" id="module_id" value="@ViewData["module_id"]" />
+</body>
+</html>
+<script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript" src="~/layer/layer.js"></script>
+<script type="text/javascript">
+    $(function () {
+        $("#add").click(function () { 
+            var menu_name = $("#menu_name").val();
+            if (menu_name == "") { 
+                layer.msg("请输入菜单名称");
+                return false;
+            }
+            var descr = $("#descr").val();
+            $.ajax({
+                url: "/manage/AddMenuAct",
+                type: "post",
+                cache: false,
+                async: false,
+                data: {
+                    "module_id": $("#module_id").val(),
+                    "menu_name": menu_name,
+                    "descr": descr
+                },
+                success: function (data) { 
+                    layer.msg(data);
+                }
+            });
+        });
+    });
+</script>

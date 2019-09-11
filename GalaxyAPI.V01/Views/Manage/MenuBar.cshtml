@@ -1,0 +1,53 @@
+﻿@*
+    部分视图--菜单栏--根据模块id生成模块下的子菜单
+*@
+<div class="list-group"></div>
+<input type="hidden" id="hid_page_status" value=""/>
+
+<script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+<script type="text/javascript">
+    $(function () {
+        var module_id = '@ViewData["ModuleId"]';
+        if (module_id == "") { module_id = 5; }
+        var menu = getMenuByModule(module_id);
+        var menuJson = eval(menu); 
+        //生成菜单
+        for (var i = 0; i < menuJson.length;i++) { 
+            var list_a = $("<a></a>");
+            list_a.attr({ "class": "list-group-item list-group-item-info","name":"menu_bar_a", "href": "#", "id": menuJson[i]["menu_name"], "module_name": menuJson[i]["module_name"] });
+            $(".list-group").append(list_a);
+
+            list_h5 = $("<h5></h5>");
+            list_h5.attr({ "class": "list-group-item-heading text-center" }).text(menuJson[i]["descr"]);
+            list_a.append(list_h5);
+        }
+
+        $("a[name='menu_bar_a']").click(function () {
+            var id = $(this).attr("id");
+            var module_name = $(this).attr("module_name");
+            $.ajax({
+                url: "/" + module_name +"/" + id,
+                type: "post",
+                cache: false,
+                success: function (data) {
+                    $("#content_body").html(data);
+                    $("#hid_page_status").val(id);
+                }
+            });
+        });
+    });
+    function getMenuByModule(module_id) {
+        var menu = "";
+        $.ajax({
+            url: "/Manage/GetMenuByModule",
+            type: "post",
+            cache: false,
+            async: false,
+            data: { "module_id": parseInt(module_id, 10) },
+            success: function (data) {
+                menu = data;
+            }
+        });
+        return menu;
+    }
+</script>

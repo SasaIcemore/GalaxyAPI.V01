@@ -1,0 +1,116 @@
+﻿
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>RoleManage</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/layer/theme/default/layer.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/layer/layer.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-1">
+                <div class="btn btn-info" id="add_role">添加角色</div>
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-8">
+                <table class="table table-striped">
+                    <tr>
+                        <th>ID</th>
+                        <th>角色名</th>
+                        <th>状态</th>
+                        <th>详情</th>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <script type="text/javascript">
+    $(function () {
+        //动态生成角色列表
+        $.ajax({
+            url: "/Manage/GetRoles",
+            type: "post",
+            cache: false,
+            async: false,
+            data: {
+                "all_role": true
+            },
+            success: function (data) {
+                //console.log(data);
+                var table = $("table");
+                var json = eval("(" + data + ")");
+                if (json != null || json != "null") {
+                    for (var i = 0; i < json.length; i++) {
+                        var tr = $("<tr></tr>");
+                        tr.appendTo(table);
+
+                        var td1 = $("<td></td>");
+                        td1.text(json[i]["id"]);
+                        td1.appendTo(tr);
+                        var td2 = $("<td></td>");
+                        td2.text(json[i]["role_name"]);
+                        td2.appendTo(tr);
+
+                        var td3 = $("<td></td>");
+                        if (json[i]["is_del"] == false) {
+                            td3.html("<font color='blue'>启用</font>");
+                        } else {
+                            td3.html("<font color='red'>已删除</font>");
+                        }
+                        td3.appendTo(tr);
+
+                        var td4 = $("<td></td>");
+                        td4.html("<div class='btn btn-info' id='roleId_" + json[i]["id"]+"' is_del='"+ json[i]["is_del"] +"'>详情</div>");
+                        td4.appendTo(tr);
+                    }
+                }
+            }
+        });
+
+        $("#add_role").click(add_Role);
+        $("div[id^='roleId_']").click(function () {
+            var role_id = $(this).attr("id").split("_")[1];
+            role_info(role_id, $(this).attr("is_del"));
+        });
+    });
+    function add_Role() {
+        layer.open({
+            type: 2,
+            title: '添加角色',
+            shadeClose: true,
+            shade: 0.8,
+            area: ['400px', '350px'],
+            content: '/manage/AddRole' //iframe的url
+        });
+    }
+
+    function role_info(role_id, is_del) {
+        $.ajax({
+            url: "/manage/RoleInfo",
+            type: "post",
+            cache: false,
+            data: {
+                "role_id": role_id,
+                "is_del": is_del
+            },
+            success: function (data) {
+                $("#content_body").empty().html(data);
+            }
+        });
+    }
+    </script>
+</body>
+</html>
